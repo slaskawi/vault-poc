@@ -1,0 +1,19 @@
+syntax = "proto3";
+package kvservice.v1;
+option go_package = "github.com/slaskawi/vault-poc/api/v1";
+
+import "google/api/annotations.proto";
+
+message PingRequest {}
+
+message PingResponse {
+    string ping = 1;
+}
+
+service KVService {
+    rpc Ping(PingRequest) returns (PingResponse) {
+        option (google.api.http) = {
+            get: "/v1/ping"
+        };
+    }
+}
