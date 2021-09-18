@@ -1,0 +1,78 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vault-poc-provider
+---
+# Should be created automagically - let's see....
+#apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+#kind: SecretProviderClass
+#metadata:
+#  name: vault-poc
+#  namespace: vault-poc-provider
+#spec:
+#  provider: vault-poc
+#---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault-poc-provider
+  namespace: vault-poc-provider
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: vault-poc-provider
+  name: vault-poc-provider
+  namespace: vault-poc-provider
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: vault-poc-provider
+  template:
+    metadata:
+      labels:
+        app: vault-poc-provider
+    spec:
+      serviceAccountName: vault-poc-provider
+      containers:
+        - name: e2e-provider
+          image: slaskawi/vault-poc
+          imagePullPolicy: Always
+          command:
+            - "/bin/vault-poc"
+          args:
+            - --endpoint=unix:///provider/vault-poc-provider.sock
+          resources:
+            requests:
+              cpu: 50m
+              memory: 100Mi
+            limits:
+              cpu: 50m
+              memory: 100Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsUser: 0
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - mountPath: "/provider"
+              name: providervol
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: type
+                    operator: NotIn
+                    values:
+                      - virtual-kubelet
+      volumes:
+        - name: providervol
+          hostPath:
+            path: "/etc/kubernetes/secrets-store-csi-providers"
