@@ -10,6 +10,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -21,14 +22,111 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type PingRequest struct {
+// CipherType is the type of cipher used to perform encryption.
+type CipherType int32
+
+const (
+	CipherType_AES256_GCM CipherType = 0
+)
+
+// Enum value maps for CipherType.
+var (
+	CipherType_name = map[int32]string{
+		0: "AES256_GCM",
+	}
+	CipherType_value = map[string]int32{
+		"AES256_GCM": 0,
+	}
+)
+
+func (x CipherType) Enum() *CipherType {
+	p := new(CipherType)
+	*p = x
+	return p
+}
+
+func (x CipherType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CipherType) Descriptor() protoreflect.EnumDescriptor {
+	return file_kvservice_proto_enumTypes[0].Descriptor()
+}
+
+func (CipherType) Type() protoreflect.EnumType {
+	return &file_kvservice_proto_enumTypes[0]
+}
+
+func (x CipherType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CipherType.Descriptor instead.
+func (CipherType) EnumDescriptor() ([]byte, []int) {
+	return file_kvservice_proto_rawDescGZIP(), []int{0}
+}
+
+// DecryptedItemType determines what structure should be used to unmarshal the value.
+type DecryptedItemType int32
+
+const (
+	DecryptedItemType_RAW DecryptedItemType = 0
+	DecryptedItemType_MAP DecryptedItemType = 1
+)
+
+// Enum value maps for DecryptedItemType.
+var (
+	DecryptedItemType_name = map[int32]string{
+		0: "RAW",
+		1: "MAP",
+	}
+	DecryptedItemType_value = map[string]int32{
+		"RAW": 0,
+		"MAP": 1,
+	}
+)
+
+func (x DecryptedItemType) Enum() *DecryptedItemType {
+	p := new(DecryptedItemType)
+	*p = x
+	return p
+}
+
+func (x DecryptedItemType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DecryptedItemType) Descriptor() protoreflect.EnumDescriptor {
+	return file_kvservice_proto_enumTypes[1].Descriptor()
+}
+
+func (DecryptedItemType) Type() protoreflect.EnumType {
+	return &file_kvservice_proto_enumTypes[1]
+}
+
+func (x DecryptedItemType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DecryptedItemType.Descriptor instead.
+func (DecryptedItemType) EnumDescriptor() ([]byte, []int) {
+	return file_kvservice_proto_rawDescGZIP(), []int{1}
+}
+
+// EncryptionKey holds the details for encrypting or decrypting an item.
+type EncryptionKey struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	Id      uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type    CipherType             `protobuf:"varint,2,opt,name=type,proto3,enum=kvservice.v1.CipherType" json:"type,omitempty"`
+	Key     []byte                 `protobuf:"bytes,3,opt,name=key,proto3" json:"key,omitempty"`
+	Created *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created,proto3" json:"created,omitempty"`
 }
 
-func (x *PingRequest) Reset() {
-	*x = PingRequest{}
+func (x *EncryptionKey) Reset() {
+	*x = EncryptionKey{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_kvservice_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -36,13 +134,13 @@ func (x *PingRequest) Reset() {
 	}
 }
 
-func (x *PingRequest) String() string {
+func (x *EncryptionKey) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PingRequest) ProtoMessage() {}
+func (*EncryptionKey) ProtoMessage() {}
 
-func (x *PingRequest) ProtoReflect() protoreflect.Message {
+func (x *EncryptionKey) ProtoReflect() protoreflect.Message {
 	mi := &file_kvservice_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -54,21 +152,52 @@ func (x *PingRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PingRequest.ProtoReflect.Descriptor instead.
-func (*PingRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use EncryptionKey.ProtoReflect.Descriptor instead.
+func (*EncryptionKey) Descriptor() ([]byte, []int) {
 	return file_kvservice_proto_rawDescGZIP(), []int{0}
 }
 
-type PingResponse struct {
+func (x *EncryptionKey) GetId() uint32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *EncryptionKey) GetType() CipherType {
+	if x != nil {
+		return x.Type
+	}
+	return CipherType_AES256_GCM
+}
+
+func (x *EncryptionKey) GetKey() []byte {
+	if x != nil {
+		return x.Key
+	}
+	return nil
+}
+
+func (x *EncryptionKey) GetCreated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Created
+	}
+	return nil
+}
+
+// KeychainSnapshot holds a snapshot of `pkg/barrier/keychain.Keychain`.
+type KeychainSnapshot struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Ping string `protobuf:"bytes,1,opt,name=ping,proto3" json:"ping,omitempty"`
+	Name    string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Keys    []*EncryptionKey       `protobuf:"bytes,2,rep,name=keys,proto3" json:"keys,omitempty"`
+	Created *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created,proto3" json:"created,omitempty"`
 }
 
-func (x *PingResponse) Reset() {
-	*x = PingResponse{}
+func (x *KeychainSnapshot) Reset() {
+	*x = KeychainSnapshot{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_kvservice_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -76,13 +205,13 @@ func (x *PingResponse) Reset() {
 	}
 }
 
-func (x *PingResponse) String() string {
+func (x *KeychainSnapshot) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PingResponse) ProtoMessage() {}
+func (*KeychainSnapshot) ProtoMessage() {}
 
-func (x *PingResponse) ProtoReflect() protoreflect.Message {
+func (x *KeychainSnapshot) ProtoReflect() protoreflect.Message {
 	mi := &file_kvservice_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -94,16 +223,336 @@ func (x *PingResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PingResponse.ProtoReflect.Descriptor instead.
-func (*PingResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use KeychainSnapshot.ProtoReflect.Descriptor instead.
+func (*KeychainSnapshot) Descriptor() ([]byte, []int) {
 	return file_kvservice_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *PingResponse) GetPing() string {
+func (x *KeychainSnapshot) GetName() string {
 	if x != nil {
-		return x.Ping
+		return x.Name
 	}
 	return ""
+}
+
+func (x *KeychainSnapshot) GetKeys() []*EncryptionKey {
+	if x != nil {
+		return x.Keys
+	}
+	return nil
+}
+
+func (x *KeychainSnapshot) GetCreated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Created
+	}
+	return nil
+}
+
+// BackendItem represents an item stored in a physical backend.
+type BackendItem struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Key             string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	EncryptionKeyID uint32 `protobuf:"varint,2,opt,name=encryptionKeyID,proto3" json:"encryptionKeyID,omitempty"`
+	Val             []byte `protobuf:"bytes,3,opt,name=val,proto3" json:"val,omitempty"`
+}
+
+func (x *BackendItem) Reset() {
+	*x = BackendItem{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kvservice_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BackendItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BackendItem) ProtoMessage() {}
+
+func (x *BackendItem) ProtoReflect() protoreflect.Message {
+	mi := &file_kvservice_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BackendItem.ProtoReflect.Descriptor instead.
+func (*BackendItem) Descriptor() ([]byte, []int) {
+	return file_kvservice_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *BackendItem) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *BackendItem) GetEncryptionKeyID() uint32 {
+	if x != nil {
+		return x.EncryptionKeyID
+	}
+	return 0
+}
+
+func (x *BackendItem) GetVal() []byte {
+	if x != nil {
+		return x.Val
+	}
+	return nil
+}
+
+// DecryptedItem represents an item retrieved from a physical backend and decrypted based on CipherInfo.
+type DecryptedItem struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Key  string            `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Type DecryptedItemType `protobuf:"varint,2,opt,name=type,proto3,enum=kvservice.v1.DecryptedItemType" json:"type,omitempty"`
+	Val  []byte            `protobuf:"bytes,3,opt,name=val,proto3" json:"val,omitempty"`
+}
+
+func (x *DecryptedItem) Reset() {
+	*x = DecryptedItem{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kvservice_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DecryptedItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DecryptedItem) ProtoMessage() {}
+
+func (x *DecryptedItem) ProtoReflect() protoreflect.Message {
+	mi := &file_kvservice_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DecryptedItem.ProtoReflect.Descriptor instead.
+func (*DecryptedItem) Descriptor() ([]byte, []int) {
+	return file_kvservice_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *DecryptedItem) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *DecryptedItem) GetType() DecryptedItemType {
+	if x != nil {
+		return x.Type
+	}
+	return DecryptedItemType_RAW
+}
+
+func (x *DecryptedItem) GetVal() []byte {
+	if x != nil {
+		return x.Val
+	}
+	return nil
+}
+
+type SystemRotateRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *SystemRotateRequest) Reset() {
+	*x = SystemRotateRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kvservice_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SystemRotateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SystemRotateRequest) ProtoMessage() {}
+
+func (x *SystemRotateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kvservice_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SystemRotateRequest.ProtoReflect.Descriptor instead.
+func (*SystemRotateRequest) Descriptor() ([]byte, []int) {
+	return file_kvservice_proto_rawDescGZIP(), []int{4}
+}
+
+type SystemRotateResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	KeyID uint32 `protobuf:"varint,1,opt,name=KeyID,proto3" json:"KeyID,omitempty"`
+}
+
+func (x *SystemRotateResponse) Reset() {
+	*x = SystemRotateResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kvservice_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SystemRotateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SystemRotateResponse) ProtoMessage() {}
+
+func (x *SystemRotateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_kvservice_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SystemRotateResponse.ProtoReflect.Descriptor instead.
+func (*SystemRotateResponse) Descriptor() ([]byte, []int) {
+	return file_kvservice_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *SystemRotateResponse) GetKeyID() uint32 {
+	if x != nil {
+		return x.KeyID
+	}
+	return 0
+}
+
+type SystemStatusRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *SystemStatusRequest) Reset() {
+	*x = SystemStatusRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kvservice_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SystemStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SystemStatusRequest) ProtoMessage() {}
+
+func (x *SystemStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kvservice_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SystemStatusRequest.ProtoReflect.Descriptor instead.
+func (*SystemStatusRequest) Descriptor() ([]byte, []int) {
+	return file_kvservice_proto_rawDescGZIP(), []int{6}
+}
+
+type SystemStatusResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Sealed          bool                   `protobuf:"varint,1,opt,name=sealed,proto3" json:"sealed,omitempty"`
+	ServerTimestamp *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=serverTimestamp,proto3" json:"serverTimestamp,omitempty"`
+}
+
+func (x *SystemStatusResponse) Reset() {
+	*x = SystemStatusResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kvservice_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SystemStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SystemStatusResponse) ProtoMessage() {}
+
+func (x *SystemStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_kvservice_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SystemStatusResponse.ProtoReflect.Descriptor instead.
+func (*SystemStatusResponse) Descriptor() ([]byte, []int) {
+	return file_kvservice_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *SystemStatusResponse) GetSealed() bool {
+	if x != nil {
+		return x.Sealed
+	}
+	return false
+}
+
+func (x *SystemStatusResponse) GetServerTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ServerTimestamp
+	}
+	return nil
 }
 
 var File_kvservice_proto protoreflect.FileDescriptor
@@ -112,19 +561,76 @@ var file_kvservice_proto_rawDesc = []byte{
 	0x0a, 0x0f, 0x6b, 0x76, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x12, 0x0c, 0x6b, 0x76, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x1a,
 	0x1c, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x61, 0x6e, 0x6e, 0x6f,
-	0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x0d, 0x0a,
-	0x0b, 0x50, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x22, 0x0a, 0x0c,
-	0x50, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04,
-	0x70, 0x69, 0x6e, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x70, 0x69, 0x6e, 0x67,
-	0x32, 0x5c, 0x0a, 0x09, 0x4b, 0x56, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x4f, 0x0a,
-	0x04, 0x50, 0x69, 0x6e, 0x67, 0x12, 0x19, 0x2e, 0x6b, 0x76, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63,
-	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x1a, 0x2e, 0x6b, 0x76, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e,
-	0x50, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x10, 0x82, 0xd3,
-	0xe4, 0x93, 0x02, 0x0a, 0x12, 0x08, 0x2f, 0x76, 0x31, 0x2f, 0x70, 0x69, 0x6e, 0x67, 0x42, 0x26,
-	0x5a, 0x24, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x6c, 0x61,
-	0x73, 0x6b, 0x61, 0x77, 0x69, 0x2f, 0x76, 0x61, 0x75, 0x6c, 0x74, 0x2d, 0x70, 0x6f, 0x63, 0x2f,
-	0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1f, 0x67,
+	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x74,
+	0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x95,
+	0x01, 0x0a, 0x0d, 0x45, 0x6e, 0x63, 0x72, 0x79, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x4b, 0x65, 0x79,
+	0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x02, 0x69, 0x64,
+	0x12, 0x2c, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x18,
+	0x2e, 0x6b, 0x76, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x69,
+	0x70, 0x68, 0x65, 0x72, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x10,
+	0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x6b, 0x65, 0x79,
+	0x12, 0x34, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x07, 0x63,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x22, 0x8d, 0x01, 0x0a, 0x10, 0x4b, 0x65, 0x79, 0x63, 0x68,
+	0x61, 0x69, 0x6e, 0x53, 0x6e, 0x61, 0x70, 0x73, 0x68, 0x6f, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12,
+	0x2f, 0x0a, 0x04, 0x6b, 0x65, 0x79, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1b, 0x2e,
+	0x6b, 0x76, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x6e, 0x63,
+	0x72, 0x79, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x4b, 0x65, 0x79, 0x52, 0x04, 0x6b, 0x65, 0x79, 0x73,
+	0x12, 0x34, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x07, 0x63,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x22, 0x5b, 0x0a, 0x0b, 0x42, 0x61, 0x63, 0x6b, 0x65, 0x6e,
+	0x64, 0x49, 0x74, 0x65, 0x6d, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x28, 0x0a, 0x0f, 0x65, 0x6e, 0x63, 0x72, 0x79,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x4b, 0x65, 0x79, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d,
+	0x52, 0x0f, 0x65, 0x6e, 0x63, 0x72, 0x79, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x4b, 0x65, 0x79, 0x49,
+	0x44, 0x12, 0x10, 0x0a, 0x03, 0x76, 0x61, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03,
+	0x76, 0x61, 0x6c, 0x22, 0x68, 0x0a, 0x0d, 0x44, 0x65, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65, 0x64,
+	0x49, 0x74, 0x65, 0x6d, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x33, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x1f, 0x2e, 0x6b, 0x76, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
+	0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65, 0x64, 0x49, 0x74, 0x65,
+	0x6d, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x76,
+	0x61, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x76, 0x61, 0x6c, 0x22, 0x15, 0x0a,
+	0x13, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x52, 0x6f, 0x74, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x22, 0x2c, 0x0a, 0x14, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x52, 0x6f,
+	0x74, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05,
+	0x4b, 0x65, 0x79, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x4b, 0x65, 0x79,
+	0x49, 0x44, 0x22, 0x15, 0x0a, 0x13, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x53, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x74, 0x0a, 0x14, 0x53, 0x79, 0x73,
+	0x74, 0x65, 0x6d, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x65, 0x61, 0x6c, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x08, 0x52, 0x06, 0x73, 0x65, 0x61, 0x6c, 0x65, 0x64, 0x12, 0x44, 0x0a, 0x0f, 0x73, 0x65, 0x72,
+	0x76, 0x65, 0x72, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x0f,
+	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x2a,
+	0x1c, 0x0a, 0x0a, 0x43, 0x69, 0x70, 0x68, 0x65, 0x72, 0x54, 0x79, 0x70, 0x65, 0x12, 0x0e, 0x0a,
+	0x0a, 0x41, 0x45, 0x53, 0x32, 0x35, 0x36, 0x5f, 0x47, 0x43, 0x4d, 0x10, 0x00, 0x2a, 0x25, 0x0a,
+	0x11, 0x44, 0x65, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65, 0x64, 0x49, 0x74, 0x65, 0x6d, 0x54, 0x79,
+	0x70, 0x65, 0x12, 0x07, 0x0a, 0x03, 0x52, 0x41, 0x57, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x4d,
+	0x41, 0x50, 0x10, 0x01, 0x32, 0xef, 0x01, 0x0a, 0x09, 0x4b, 0x56, 0x53, 0x65, 0x72, 0x76, 0x69,
+	0x63, 0x65, 0x12, 0x70, 0x0a, 0x0c, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x52, 0x6f, 0x74, 0x61,
+	0x74, 0x65, 0x12, 0x21, 0x2e, 0x6b, 0x76, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x52, 0x6f, 0x74, 0x61, 0x74, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x6b, 0x76, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x52, 0x6f, 0x74, 0x61, 0x74,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x19, 0x82, 0xd3, 0xe4, 0x93, 0x02,
+	0x13, 0x12, 0x11, 0x2f, 0x76, 0x31, 0x2f, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x2f, 0x72, 0x6f,
+	0x74, 0x61, 0x74, 0x65, 0x12, 0x70, 0x0a, 0x0c, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x53, 0x74,
+	0x61, 0x74, 0x75, 0x73, 0x12, 0x21, 0x2e, 0x6b, 0x76, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
+	0x2e, 0x76, 0x31, 0x2e, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x6b, 0x76, 0x73, 0x65, 0x72, 0x76,
+	0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x53, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x19, 0x82, 0xd3, 0xe4,
+	0x93, 0x02, 0x13, 0x12, 0x11, 0x2f, 0x76, 0x31, 0x2f, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x2f,
+	0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x42, 0x26, 0x5a, 0x24, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
+	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x6c, 0x61, 0x73, 0x6b, 0x61, 0x77, 0x69, 0x2f, 0x76, 0x61,
+	0x75, 0x6c, 0x74, 0x2d, 0x70, 0x6f, 0x63, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -139,19 +645,37 @@ func file_kvservice_proto_rawDescGZIP() []byte {
 	return file_kvservice_proto_rawDescData
 }
 
-var file_kvservice_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_kvservice_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_kvservice_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_kvservice_proto_goTypes = []interface{}{
-	(*PingRequest)(nil),  // 0: kvservice.v1.PingRequest
-	(*PingResponse)(nil), // 1: kvservice.v1.PingResponse
+	(CipherType)(0),               // 0: kvservice.v1.CipherType
+	(DecryptedItemType)(0),        // 1: kvservice.v1.DecryptedItemType
+	(*EncryptionKey)(nil),         // 2: kvservice.v1.EncryptionKey
+	(*KeychainSnapshot)(nil),      // 3: kvservice.v1.KeychainSnapshot
+	(*BackendItem)(nil),           // 4: kvservice.v1.BackendItem
+	(*DecryptedItem)(nil),         // 5: kvservice.v1.DecryptedItem
+	(*SystemRotateRequest)(nil),   // 6: kvservice.v1.SystemRotateRequest
+	(*SystemRotateResponse)(nil),  // 7: kvservice.v1.SystemRotateResponse
+	(*SystemStatusRequest)(nil),   // 8: kvservice.v1.SystemStatusRequest
+	(*SystemStatusResponse)(nil),  // 9: kvservice.v1.SystemStatusResponse
+	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
 }
 var file_kvservice_proto_depIdxs = []int32{
-	0, // 0: kvservice.v1.KVService.Ping:input_type -> kvservice.v1.PingRequest
-	1, // 1: kvservice.v1.KVService.Ping:output_type -> kvservice.v1.PingResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: kvservice.v1.EncryptionKey.type:type_name -> kvservice.v1.CipherType
+	10, // 1: kvservice.v1.EncryptionKey.created:type_name -> google.protobuf.Timestamp
+	2,  // 2: kvservice.v1.KeychainSnapshot.keys:type_name -> kvservice.v1.EncryptionKey
+	10, // 3: kvservice.v1.KeychainSnapshot.created:type_name -> google.protobuf.Timestamp
+	1,  // 4: kvservice.v1.DecryptedItem.type:type_name -> kvservice.v1.DecryptedItemType
+	10, // 5: kvservice.v1.SystemStatusResponse.serverTimestamp:type_name -> google.protobuf.Timestamp
+	6,  // 6: kvservice.v1.KVService.SystemRotate:input_type -> kvservice.v1.SystemRotateRequest
+	8,  // 7: kvservice.v1.KVService.SystemStatus:input_type -> kvservice.v1.SystemStatusRequest
+	7,  // 8: kvservice.v1.KVService.SystemRotate:output_type -> kvservice.v1.SystemRotateResponse
+	9,  // 9: kvservice.v1.KVService.SystemStatus:output_type -> kvservice.v1.SystemStatusResponse
+	8,  // [8:10] is the sub-list for method output_type
+	6,  // [6:8] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_kvservice_proto_init() }
@@ -161,7 +685,7 @@ func file_kvservice_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_kvservice_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PingRequest); i {
+			switch v := v.(*EncryptionKey); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -173,7 +697,79 @@ func file_kvservice_proto_init() {
 			}
 		}
 		file_kvservice_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PingResponse); i {
+			switch v := v.(*KeychainSnapshot); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kvservice_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BackendItem); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kvservice_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DecryptedItem); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kvservice_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SystemRotateRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kvservice_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SystemRotateResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kvservice_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SystemStatusRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kvservice_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SystemStatusResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -190,13 +786,14 @@ func file_kvservice_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_kvservice_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      2,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_kvservice_proto_goTypes,
 		DependencyIndexes: file_kvservice_proto_depIdxs,
+		EnumInfos:         file_kvservice_proto_enumTypes,
 		MessageInfos:      file_kvservice_proto_msgTypes,
 	}.Build()
 	File_kvservice_proto = out.File

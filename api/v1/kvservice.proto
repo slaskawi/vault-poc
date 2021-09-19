@@ -3,17 +3,71 @@ package kvservice.v1;
 option go_package = "github.com/slaskawi/vault-poc/api/v1";
 
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
-message PingRequest {}
+// CipherType is the type of cipher used to perform encryption.
+enum CipherType {
+    AES256_GCM = 0;
+}
 
-message PingResponse {
-    string ping = 1;
+// EncryptionKey holds the details for encrypting or decrypting an item.
+message EncryptionKey {
+    uint32 id = 1;
+    CipherType type = 2;
+    bytes key = 3;
+    google.protobuf.Timestamp created = 4;
+}
+
+// KeychainSnapshot holds a snapshot of `pkg/barrier/keychain.Keychain`.
+message KeychainSnapshot {
+    string name = 1;
+    repeated EncryptionKey keys = 2;
+    google.protobuf.Timestamp created = 3;
+}
+
+// BackendItem represents an item stored in a physical backend.
+message BackendItem {
+    string key = 1;
+    uint32 encryptionKeyID = 2;
+    bytes val = 3;
+}
+
+// DecryptedItemType determines what structure should be used to unmarshal the value.
+enum DecryptedItemType {
+    RAW = 0;
+    MAP = 1;
+}
+
+// DecryptedItem represents an item retrieved from a physical backend and decrypted based on CipherInfo.
+message DecryptedItem {
+    string key = 1;
+    DecryptedItemType type = 2;
+    bytes val = 3;
+}
+
+message SystemRotateRequest {}
+
+message SystemRotateResponse {
+    uint32 KeyID = 1;
+}
+
+message SystemStatusRequest {}
+
+message SystemStatusResponse {
+    bool sealed = 1;
+    google.protobuf.Timestamp serverTimestamp = 2;
 }
 
 service KVService {
-    rpc Ping(PingRequest) returns (PingResponse) {
+    rpc SystemRotate(SystemRotateRequest) returns (SystemRotateResponse) {
         option (google.api.http) = {
-            get: "/v1/ping"
+            get: "/v1/system/rotate"
+        };
+    }
+
+    rpc SystemStatus(SystemStatusRequest) returns (SystemStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/system/status"
         };
     }
 }

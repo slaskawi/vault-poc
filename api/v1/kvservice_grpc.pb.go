@@ -18,7 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type KVServiceClient interface {
-	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
+	SystemRotate(ctx context.Context, in *SystemRotateRequest, opts ...grpc.CallOption) (*SystemRotateResponse, error)
+	SystemStatus(ctx context.Context, in *SystemStatusRequest, opts ...grpc.CallOption) (*SystemStatusResponse, error)
 }
 
 type kVServiceClient struct {
@@ -29,9 +30,18 @@ func NewKVServiceClient(cc grpc.ClientConnInterface) KVServiceClient {
 	return &kVServiceClient{cc}
 }
 
-func (c *kVServiceClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
-	out := new(PingResponse)
-	err := c.cc.Invoke(ctx, "/kvservice.v1.KVService/Ping", in, out, opts...)
+func (c *kVServiceClient) SystemRotate(ctx context.Context, in *SystemRotateRequest, opts ...grpc.CallOption) (*SystemRotateResponse, error) {
+	out := new(SystemRotateResponse)
+	err := c.cc.Invoke(ctx, "/kvservice.v1.KVService/SystemRotate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kVServiceClient) SystemStatus(ctx context.Context, in *SystemStatusRequest, opts ...grpc.CallOption) (*SystemStatusResponse, error) {
+	out := new(SystemStatusResponse)
+	err := c.cc.Invoke(ctx, "/kvservice.v1.KVService/SystemStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +52,8 @@ func (c *kVServiceClient) Ping(ctx context.Context, in *PingRequest, opts ...grp
 // All implementations must embed UnimplementedKVServiceServer
 // for forward compatibility
 type KVServiceServer interface {
-	Ping(context.Context, *PingRequest) (*PingResponse, error)
+	SystemRotate(context.Context, *SystemRotateRequest) (*SystemRotateResponse, error)
+	SystemStatus(context.Context, *SystemStatusRequest) (*SystemStatusResponse, error)
 	mustEmbedUnimplementedKVServiceServer()
 }
 
@@ -50,8 +61,11 @@ type KVServiceServer interface {
 type UnimplementedKVServiceServer struct {
 }
 
-func (UnimplementedKVServiceServer) Ping(context.Context, *PingRequest) (*PingResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+func (UnimplementedKVServiceServer) SystemRotate(context.Context, *SystemRotateRequest) (*SystemRotateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SystemRotate not implemented")
+}
+func (UnimplementedKVServiceServer) SystemStatus(context.Context, *SystemStatusRequest) (*SystemStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SystemStatus not implemented")
 }
 func (UnimplementedKVServiceServer) mustEmbedUnimplementedKVServiceServer() {}
 
@@ -66,20 +80,38 @@ func RegisterKVServiceServer(s grpc.ServiceRegistrar, srv KVServiceServer) {
 	s.RegisterService(&KVService_ServiceDesc, srv)
 }
 
-func _KVService_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PingRequest)
+func _KVService_SystemRotate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SystemRotateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(KVServiceServer).Ping(ctx, in)
+		return srv.(KVServiceServer).SystemRotate(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kvservice.v1.KVService/Ping",
+		FullMethod: "/kvservice.v1.KVService/SystemRotate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KVServiceServer).Ping(ctx, req.(*PingRequest))
+		return srv.(KVServiceServer).SystemRotate(ctx, req.(*SystemRotateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KVService_SystemStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SystemStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KVServiceServer).SystemStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kvservice.v1.KVService/SystemStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KVServiceServer).SystemStatus(ctx, req.(*SystemStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -92,8 +124,12 @@ var KVService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*KVServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Ping",
-			Handler:    _KVService_Ping_Handler,
+			MethodName: "SystemRotate",
+			Handler:    _KVService_SystemRotate_Handler,
+		},
+		{
+			MethodName: "SystemStatus",
+			Handler:    _KVService_SystemStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
