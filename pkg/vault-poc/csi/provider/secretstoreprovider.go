@@ -28,6 +28,7 @@ type MockCSIProviderServer struct {
 	files      []*v1alpha1.File
 }
 
+// Check https://github.com/GoogleCloudPlatform/secrets-store-csi-driver-provider-gcp/blob/main/main.go#L175-L180
 func NewMocKCSIProviderServer(providerName string) (*MockCSIProviderServer, error) {
 	server := grpc.NewServer()
 	s := &MockCSIProviderServer{
@@ -118,8 +119,8 @@ func (m *MockCSIProviderServer) Mount(ctx context.Context, req *v1alpha1.MountRe
 func (m *MockCSIProviderServer) Version(ctx context.Context, req *v1alpha1.VersionRequest) (*v1alpha1.VersionResponse, error) {
 	return &v1alpha1.VersionResponse{
 		Version:        "v1alpha1",
-		RuntimeName:    "fakeprovider",
-		RuntimeVersion: "0.0.10",
+		RuntimeName:    "vault-poc",
+		RuntimeVersion: "0.0.1",
 	}, nil
 }
 

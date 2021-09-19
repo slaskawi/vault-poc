@@ -4,6 +4,22 @@ GO_FILES=$(shell go list ./... | grep -v /test/sanity)
 go-test:
 	go test -count=1 -cover $(GO_FILES) -v
 
+.PHONY: deploy-csi
+deploy-csi:
+	kubectl apply -f ./deploy/secret-store-csi-driver/
+
+.PHONY: deploy-provider
+deploy-provider:
+	kubectl apply -f ./deploy/vault-poc-driver/
+
+.PHONY: build-image
+build-image:
+	docker build . -t slaskawi/vault-poc
+
+.PHONY: push-image
+push-image: build-image
+	docker push slaskawi/vault-poc
+
 .PHONY: generate
 generate:
 	protoc \
