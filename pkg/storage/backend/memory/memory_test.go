@@ -61,4 +61,22 @@ var _ = Describe("memory", func() {
 		Expect(len(keys)).To(Equal(1))
 		Expect(keys[0]).To(Equal("subkey1"))
 	})
+
+	It("can get an item", func() {
+		item, err := mem.Get(ctx, "test/key1")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(item).NotTo(BeNil())
+		Expect(item.Key).To(Equal("test/key1"))
+		Expect(item.Val).To(Equal([]byte("key1")))
+	})
+
+	It("can delete an item", func() {
+		err := mem.Delete(ctx, "test/key2")
+		Expect(err).NotTo(HaveOccurred())
+
+		item, err := mem.Get(ctx, "test/key2")
+		Expect(err).To(HaveOccurred())
+		Expect(backend.IsErrNotFound(err)).To(BeTrue())
+		Expect(item).To(BeNil())
+	})
 })
