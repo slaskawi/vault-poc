@@ -146,6 +146,26 @@ func (b *Barrier) ChangeGatekeeperKey(ctx context.Context, gatekeeperKey []byte)
 	return b.persistKeychain(ctx, gatekeeperKey)
 }
 
+// RotateEncryptionKey rotates the encryption key used for new writes to the physical storage backend.
+func (b *Barrier) RotateEncryptionKey(ctx context.Context, gatekeeperKey []byte) error {
+	sealed, err := b.IsSealed(ctx)
+	if err != nil {
+		return err
+	}
+	if sealed {
+		return ErrBarrierSealed
+	}
+
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if err := b.keychain.Rotate(); err != nil {
+		return err
+	}
+
+	return b.persistKeychain(ctx, gatekeeperKey)
+}
+
 func (b *Barrier) persistKeychain(ctx context.Context, gatekeeperKey []byte) error {
 	snapshot, err := b.keychain.Snapshot(gatekeeperKey)
 	if err != nil {
