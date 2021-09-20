@@ -4,6 +4,23 @@ GO_FILES=$(shell go list ./... | grep -v /test/sanity)
 go-test:
 	go test -count=1 -cover $(GO_FILES) -v
 
+.PHONY: deployment-status
+deployment-status:
+	-@echo "---- CSI Driver ----"
+	-@kubectl get pods -n kube-system | grep csi-secrets-store
+	-@kubectl logs daemonset/csi-secrets-store -n kube-system
+	-@echo "---- Vault Driver ----"
+	-@kubectl get pods -n kube-system | grep vault-poc
+	-@kubectl logs daemonset/vault-poc -n kube-system
+	-@echo "---- Vault Example ----"
+	-@kubectl get pods -n vault-poc
+	-@kubectl exec -n vault-poc vault-poc -- ls -ltra /mnt/secrets-store
+	-@kubectl exec -n vault-poc vault-poc -- cat /mnt/secrets-store/my-secret-key
+
+.PHONY: deploy-example
+deploy-example:
+	kubectl apply -f ./deploy/example/
+
 .PHONY: deploy-csi
 deploy-csi:
 	kubectl apply -f ./deploy/secret-store-csi-driver/

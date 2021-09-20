@@ -1,43 +1,28 @@
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: vault-poc-provider
----
-# Should be created automagically - let's see....
-#apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
-#kind: SecretProviderClass
-#metadata:
-#  name: vault-poc
-#  namespace: vault-poc-provider
-#spec:
-#  provider: vault-poc
-#---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: vault-poc-provider
-  namespace: vault-poc-provider
+  name: vault-poc
+  namespace: kube-system
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   labels:
-    app: vault-poc-provider
-  name: vault-poc-provider
-  namespace: vault-poc-provider
+    app: vault-poc
+  name: vault-poc
+  namespace: kube-system
 spec:
   updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
-      app: vault-poc-provider
+      app: vault-poc
   template:
     metadata:
       labels:
-        app: vault-poc-provider
+        app: vault-poc
     spec:
-      serviceAccountName: vault-poc-provider
+      serviceAccountName: vault-poc
       containers:
         - name: e2e-provider
           image: slaskawi/vault-poc
@@ -45,7 +30,7 @@ spec:
           command:
             - "/bin/vault-poc"
           args:
-            - --endpoint=unix:///provider/vault-poc-provider.sock
+            - --endpoint=unix:///provider/vault-poc.sock
           resources:
             requests:
               cpu: 50m

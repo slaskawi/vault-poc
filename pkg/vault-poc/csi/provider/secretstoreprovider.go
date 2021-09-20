@@ -1,5 +1,3 @@
-// Copy-pasted from https://github.com/kubernetes-sigs/secrets-store-csi-driver/blob/main/provider/fake/fake_server.go
-
 package provider
 
 import (
@@ -14,10 +12,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	TEMP_DIRECTORY = "csi-provider"
-)
-
 type MockCSIProviderServer struct {
 	grpcServer *grpc.Server
 	listener   net.Listener
@@ -28,12 +22,11 @@ type MockCSIProviderServer struct {
 	files      []*v1alpha1.File
 }
 
-// Check https://github.com/GoogleCloudPlatform/secrets-store-csi-driver-provider-gcp/blob/main/main.go#L175-L180
-func NewMocKCSIProviderServer(providerName string) (*MockCSIProviderServer, error) {
+func NewMocKCSIProviderServer(socketPath string) (*MockCSIProviderServer, error) {
 	server := grpc.NewServer()
 	s := &MockCSIProviderServer{
 		grpcServer: server,
-		socketPath: getSocketEndpoint(providerName),
+		socketPath: socketPath,
 	}
 	v1alpha1.RegisterCSIDriverProviderServer(server, s)
 	return s, nil
@@ -122,16 +115,4 @@ func (m *MockCSIProviderServer) Version(ctx context.Context, req *v1alpha1.Versi
 		RuntimeName:    "vault-poc",
 		RuntimeVersion: "0.0.1",
 	}, nil
-}
-
-func getTempTestDir() string {
-	tmpDir, err := os.MkdirTemp("", TEMP_DIRECTORY)
-	if err != nil {
-		panic(fmt.Sprintf("Could not create a temporary directory %v",  err))
-	}
-	return tmpDir
-}
-
-func getSocketEndpoint(providerName string) string {
-	return fmt.Sprintf("%s/%s.sock", getTempTestDir(), providerName)
 }
