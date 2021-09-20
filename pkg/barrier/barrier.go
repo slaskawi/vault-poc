@@ -6,12 +6,15 @@ import (
 	"sync"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
+	"github.com/slaskawi/vault-poc/pkg/barrier/encryption"
 	"github.com/slaskawi/vault-poc/pkg/barrier/keychain"
 	"github.com/slaskawi/vault-poc/pkg/storage/backend"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
-	keychainPath = "oss/barrier/keychain"
+	keychainPath = "oss/barrier/"
+	keychainKey  = "keychain"
 )
 
 var (
@@ -20,7 +23,13 @@ var (
 	ErrBarrierSealed             = fmt.Errorf("barrier is sealed")
 	ErrBarrierUnsealed           = fmt.Errorf("barrier is already unsealed")
 	ErrBarrierInvalidKey         = fmt.Errorf("unseal failed due to invalid key")
+	ErrDisallowedPath            = fmt.Errorf("key path is not allowed")
+	ErrMixRawMapValues           = fmt.Errorf("cannot mix raw and map values")
 )
+
+var disallowedPaths = map[string]struct{}{
+	keychainPath + keychainKey: {},
+}
 
 // Barrier object.
 type Barrier struct {
@@ -52,15 +61,13 @@ func (b *Barrier) IsInitialized(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("unable to detect initializtion: %w", err)
 	}
 
-	found := false
 	for _, key := range keys {
-		if key == keychainPath {
-			found = true
-			break
+		if key == keychainKey {
+			return true, nil
 		}
 	}
 
-	return found, nil
+	return false, nil
 }
 
 // Initialize will create a new Keychain only if one doesn't already exist.
@@ -81,7 +88,9 @@ func (b *Barrier) Initialize(ctx context.Context, gatekeeperKey []byte) error {
 		return fmt.Errorf("failed to create keychain: %w", err)
 	}
 
-	return b.persistKeychain(ctx, gatekeeperKey)
+	err = b.persistKeychain(ctx, gatekeeperKey)
+	b.keychain = nil
+	return err
 }
 
 // IsSealed determines if the secret store is initialized, but sealed.
@@ -166,6 +175,108 @@ func (b *Barrier) RotateEncryptionKey(ctx context.Context, gatekeeperKey []byte)
 	return b.persistKeychain(ctx, gatekeeperKey)
 }
 
+// List items in the given prefix.
+func (b *Barrier) List(ctx context.Context, prefix string) ([]string, error) {
+	sealed, err := b.IsSealed(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if sealed {
+		return nil, ErrBarrierSealed
+	}
+
+	return b.backend.List(ctx, prefix)
+}
+
+// Get an item from the storage backend.
+func (b *Barrier) Get(ctx context.Context, key string) (*apiv1.Item, error) {
+	sealed, err := b.IsSealed(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if sealed {
+		return nil, ErrBarrierSealed
+	}
+	if _, ok := disallowedPaths[key]; ok {
+		return nil, ErrDisallowedPath
+	}
+
+	bitem, err := b.backend.Get(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	encKey := b.keychain.Key(bitem.EncryptionKeyID)
+	if encKey == nil {
+		return nil, fmt.Errorf("unable to unencrypt value: reported EncryptionKeyID %d does not exist", bitem.EncryptionKeyID)
+	}
+
+	decrypted, err := encryption.Decrypt(encKey.Type, encKey.Key, bitem.Val)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt key: %s: %w", key, err)
+	}
+
+	item := &apiv1.Item{}
+	if err := proto.Unmarshal(decrypted, item); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal key: %s: %w", key, err)
+	}
+
+	return item, nil
+}
+
+// Put an item in the storage backend after encrypting it.
+func (b *Barrier) Put(ctx context.Context, item *apiv1.Item) error {
+	sealed, err := b.IsSealed(ctx)
+	if err != nil {
+		return err
+	}
+	if sealed {
+		return ErrBarrierSealed
+	}
+	if _, ok := disallowedPaths[item.Key]; ok {
+		return ErrDisallowedPath
+	}
+
+	if item.Map != nil && item.Raw != nil {
+		return ErrMixRawMapValues
+	}
+
+	bs, err := proto.Marshal(item)
+	if err != nil {
+		return fmt.Errorf("unable to marshal item: %s: %w", item.Key, err)
+	}
+
+	encKey := b.keychain.ActiveKey()
+	encrypted, err := encryption.Encrypt(encKey.Type, encKey.Key, bs)
+	if err != nil {
+		return fmt.Errorf("unable to encrypt item: %s: %w", item.Key, err)
+	}
+
+	bitem := &apiv1.BackendItem{
+		Key:             item.Key,
+		EncryptionKeyID: encKey.Id,
+		Val:             encrypted,
+	}
+
+	return b.backend.Put(ctx, bitem)
+}
+
+// Delete an item from the storage backend.
+func (b *Barrier) Delete(ctx context.Context, key string) error {
+	sealed, err := b.IsSealed(ctx)
+	if err != nil {
+		return err
+	}
+	if sealed {
+		return ErrBarrierSealed
+	}
+	if _, ok := disallowedPaths[key]; ok {
+		return ErrDisallowedPath
+	}
+
+	return b.backend.Delete(ctx, key)
+}
+
 func (b *Barrier) persistKeychain(ctx context.Context, gatekeeperKey []byte) error {
 	snapshot, err := b.keychain.Snapshot(gatekeeperKey)
 	if err != nil {
@@ -173,7 +284,7 @@ func (b *Barrier) persistKeychain(ctx context.Context, gatekeeperKey []byte) err
 	}
 
 	item := &apiv1.BackendItem{
-		Key:             keychainPath,
+		Key:             keychainPath + keychainKey,
 		EncryptionKeyID: uint32(apiv1.CipherType_AES256_GCM),
 		Val:             snapshot,
 	}
@@ -185,7 +296,7 @@ func (b *Barrier) persistKeychain(ctx context.Context, gatekeeperKey []byte) err
 }
 
 func (b *Barrier) retrieveKeychain(ctx context.Context, gatekeeperKey []byte) (*keychain.Keychain, error) {
-	item, err := b.backend.Get(ctx, keychainPath)
+	item, err := b.backend.Get(ctx, keychainPath+keychainKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get keychain from backend storage: %w", err)
 	}
