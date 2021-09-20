@@ -61,7 +61,7 @@ var _ = Describe("barrier", func() {
 		id, err := barrier.ID(ctx)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(id).NotTo(BeNil())
-		Expect(id.String()).NotTo(BeEmpty())
+		Expect(id.Uint64String()).NotTo(BeEmpty())
 	})
 
 	It("can unseal", func() {

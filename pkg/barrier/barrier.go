@@ -1,9 +1,9 @@
+// Package barrier wraps a `backend.Storage` to add an encryption/decryption layer for all secrets stored in the backend.
 package barrier
 
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"sync"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
@@ -33,21 +33,6 @@ var (
 var disallowedPaths = map[string]struct{}{
 	barrierPath + keychainKey: {},
 	barrierPath + idKey:       {},
-}
-
-// ID object.
-type ID struct {
-	b []byte
-}
-
-// Uint64 returns a unit64 hash of the ID.
-func (i *ID) Uint64() uint64 {
-	return encryption.Uint64Hash(i.b)
-}
-
-// String returns the string representation of the uint64 hash.
-func (i *ID) String() string {
-	return strconv.FormatUint(i.Uint64(), 10)
 }
 
 // Barrier object.
@@ -128,14 +113,19 @@ func (b *Barrier) Initialize(ctx context.Context, gatekeeperKey []byte) error {
 
 // ID gets the barrier's ID that was created during Initialization.
 // Returns `backend.ErrNotFound` if barrier has not been initialized.
-func (b *Barrier) ID(ctx context.Context) (*ID, error) {
+func (b *Barrier) ID(ctx context.Context) (encryption.Hash, error) {
 	bitem, err := b.backend.Get(ctx, barrierPath+idKey)
 	if err != nil {
-		return nil, err
+		return encryption.Hash{}, err
 	}
 
-	id := &ID{b: bitem.Val}
-	return id, nil
+	return encryption.FromHash(bitem.Val), nil
+}
+
+// Backend returns the underlying `backend.Storage` used to create the Barrier.
+// Operations performed on the backend directly are not managed by the barrier.
+func (b *Barrier) Backend() backend.Storage {
+	return b.backend
 }
 
 // IsSealed determines if the secret store is initialized, but sealed.

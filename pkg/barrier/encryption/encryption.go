@@ -1,9 +1,11 @@
+// Package encryption provides various helpers for encryption operations.
 package encryption
 
 import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"fmt"
 	"hash/fnv"
 	"io"
@@ -79,6 +81,12 @@ func Uint64Hash(b []byte) uint64 {
 	hash := fnv.New64a()
 	hash.Write(b)
 	return hash.Sum64()
+}
+
+// BytesHash generates a sha256 hash from the given string.
+func BytesHash(s string) []byte {
+	hash := sha256.Sum256([]byte(s))
+	return hash[:]
 }
 
 // Encrypt data.

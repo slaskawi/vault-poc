@@ -1,3 +1,4 @@
+// Package keychain manages known encryption keys for the barrier.
 package keychain
 
 import (
