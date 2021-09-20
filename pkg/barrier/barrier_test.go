@@ -40,9 +40,13 @@ var _ = Describe("barrier", func() {
 		sealed, err := barrier.IsSealed(ctx)
 		Expect(err).To(MatchError(ErrBarrierNotInitialized))
 		Expect(sealed).To(BeFalse())
+
+		id, err := barrier.ID(ctx)
+		Expect(err).To(MatchError(backend.ErrNotFound))
+		Expect(id).To(BeNil())
 	})
 
-	It("can initializes", func() {
+	It("can initialize", func() {
 		err := barrier.Initialize(ctx, gatekeeperKey)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -53,6 +57,11 @@ var _ = Describe("barrier", func() {
 		sealed, err := barrier.IsSealed(ctx)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(sealed).To(BeTrue())
+
+		id, err := barrier.ID(ctx)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(id).NotTo(BeNil())
+		Expect(id.String()).NotTo(BeEmpty())
 	})
 
 	It("can unseal", func() {
@@ -135,16 +144,16 @@ var _ = Describe("barrier", func() {
 	})
 
 	It("prevents operations on disallowed keys", func() {
-		item, err := barrier.Get(ctx, keychainPath+keychainKey)
+		item, err := barrier.Get(ctx, barrierPath+keychainKey)
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(MatchError(ErrDisallowedPath))
 		Expect(item).To(BeNil())
 
-		err = barrier.Put(ctx, &apiv1.Item{Key: keychainPath + keychainKey})
+		err = barrier.Put(ctx, &apiv1.Item{Key: barrierPath + keychainKey})
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(MatchError(ErrDisallowedPath))
 
-		err = barrier.Delete(ctx, keychainPath+keychainKey)
+		err = barrier.Delete(ctx, barrierPath+keychainKey)
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(MatchError(ErrDisallowedPath))
 	})

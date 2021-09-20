@@ -3,6 +3,7 @@ package barrier
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
@@ -13,8 +14,10 @@ import (
 )
 
 const (
-	keychainPath = "oss/barrier/"
-	keychainKey  = "keychain"
+	barrierPath = "kstash/barrier/"
+	keychainKey = "keychain"
+	idKey       = "id"
+	idLength    = 18
 )
 
 var (
@@ -28,7 +31,23 @@ var (
 )
 
 var disallowedPaths = map[string]struct{}{
-	keychainPath + keychainKey: {},
+	barrierPath + keychainKey: {},
+	barrierPath + idKey:       {},
+}
+
+// ID object.
+type ID struct {
+	b []byte
+}
+
+// Uint64 returns a unit64 hash of the ID.
+func (i *ID) Uint64() uint64 {
+	return encryption.Uint64Hash(i.b)
+}
+
+// String returns the string representation of the uint64 hash.
+func (i *ID) String() string {
+	return strconv.FormatUint(i.Uint64(), 10)
 }
 
 // Barrier object.
@@ -56,7 +75,7 @@ func (b *Barrier) IsInitialized(ctx context.Context) (bool, error) {
 		return true, nil
 	}
 
-	keys, err := b.backend.List(ctx, keychainPath)
+	keys, err := b.backend.List(ctx, barrierPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to detect initializtion: %w", err)
 	}
@@ -83,6 +102,20 @@ func (b *Barrier) Initialize(ctx context.Context, gatekeeperKey []byte) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
+	// create new id
+	idB, err := encryption.GenerateKey(apiv1.CipherType_AES256_GCM)
+	if err != nil {
+		return fmt.Errorf("unable to generate new kstash ID: %w", err)
+	}
+
+	if err := b.backend.Put(ctx, &apiv1.BackendItem{
+		Key: barrierPath + idKey,
+		Val: idB,
+	}); err != nil {
+		return fmt.Errorf("unable to write generated kstash ID: %w", err)
+	}
+
+	// create new keychain
 	b.keychain = keychain.NewKeychain()
 	if err := b.keychain.Rotate(); err != nil {
 		return fmt.Errorf("failed to create keychain: %w", err)
@@ -91,6 +124,18 @@ func (b *Barrier) Initialize(ctx context.Context, gatekeeperKey []byte) error {
 	err = b.persistKeychain(ctx, gatekeeperKey)
 	b.keychain = nil
 	return err
+}
+
+// ID gets the barrier's ID that was created during Initialization.
+// Returns `backend.ErrNotFound` if barrier has not been initialized.
+func (b *Barrier) ID(ctx context.Context) (*ID, error) {
+	bitem, err := b.backend.Get(ctx, barrierPath+idKey)
+	if err != nil {
+		return nil, err
+	}
+
+	id := &ID{b: bitem.Val}
+	return id, nil
 }
 
 // IsSealed determines if the secret store is initialized, but sealed.
@@ -175,6 +220,52 @@ func (b *Barrier) RotateEncryptionKey(ctx context.Context, gatekeeperKey []byte)
 	return b.persistKeychain(ctx, gatekeeperKey)
 }
 
+// EncryptItem encrypts the given Item using the barrier's active encryption key. This is useful for encrypting/decrypting information that doesn't need to be written to storage.
+func (b *Barrier) EncryptItem(item *apiv1.Item) (*apiv1.BackendItem, error) {
+	bs, err := proto.Marshal(item)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal item: %s: %w", item.Key, err)
+	}
+
+	encKey := b.keychain.ActiveKey()
+	encrypted, err := encryption.Encrypt(encKey.Type, encKey.Key, bs)
+	if err != nil {
+		return nil, fmt.Errorf("unable to encrypt item: %s: %w", item.Key, err)
+	}
+
+	bitem := &apiv1.BackendItem{
+		Key:             item.Key,
+		EncryptionKeyID: encKey.Id,
+		Val:             encrypted,
+	}
+
+	return bitem, nil
+}
+
+// DecryptItem decrypts the given Item using a known barrier encryption key ID. This is useful for encrypting/decrypting information that doesn't need to be written to storage.
+func (b *Barrier) DecyptItem(bitem *apiv1.BackendItem) (*apiv1.Item, error) {
+	if bitem.EncryptionKeyID == 0 {
+		return nil, fmt.Errorf("encryptionKeyID cannot be zero")
+	}
+
+	encKey := b.keychain.Key(bitem.EncryptionKeyID)
+	if encKey == nil {
+		return nil, fmt.Errorf("unable to unencrypt value: reported EncryptionKeyID %d does not exist", bitem.EncryptionKeyID)
+	}
+
+	decrypted, err := encryption.Decrypt(encKey.Type, encKey.Key, bitem.Val)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt key: %s: %w", bitem.Key, err)
+	}
+
+	item := &apiv1.Item{}
+	if err := proto.Unmarshal(decrypted, item); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal key: %s: %w", bitem.Key, err)
+	}
+
+	return item, nil
+}
+
 // List items in the given prefix.
 func (b *Barrier) List(ctx context.Context, prefix string) ([]string, error) {
 	sealed, err := b.IsSealed(ctx)
@@ -206,22 +297,7 @@ func (b *Barrier) Get(ctx context.Context, key string) (*apiv1.Item, error) {
 		return nil, err
 	}
 
-	encKey := b.keychain.Key(bitem.EncryptionKeyID)
-	if encKey == nil {
-		return nil, fmt.Errorf("unable to unencrypt value: reported EncryptionKeyID %d does not exist", bitem.EncryptionKeyID)
-	}
-
-	decrypted, err := encryption.Decrypt(encKey.Type, encKey.Key, bitem.Val)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decrypt key: %s: %w", key, err)
-	}
-
-	item := &apiv1.Item{}
-	if err := proto.Unmarshal(decrypted, item); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal key: %s: %w", key, err)
-	}
-
-	return item, nil
+	return b.DecyptItem(bitem)
 }
 
 // Put an item in the storage backend after encrypting it.
@@ -241,21 +317,9 @@ func (b *Barrier) Put(ctx context.Context, item *apiv1.Item) error {
 		return ErrMixRawMapValues
 	}
 
-	bs, err := proto.Marshal(item)
+	bitem, err := b.EncryptItem(item)
 	if err != nil {
-		return fmt.Errorf("unable to marshal item: %s: %w", item.Key, err)
-	}
-
-	encKey := b.keychain.ActiveKey()
-	encrypted, err := encryption.Encrypt(encKey.Type, encKey.Key, bs)
-	if err != nil {
-		return fmt.Errorf("unable to encrypt item: %s: %w", item.Key, err)
-	}
-
-	bitem := &apiv1.BackendItem{
-		Key:             item.Key,
-		EncryptionKeyID: encKey.Id,
-		Val:             encrypted,
+		return err
 	}
 
 	return b.backend.Put(ctx, bitem)
@@ -284,7 +348,7 @@ func (b *Barrier) persistKeychain(ctx context.Context, gatekeeperKey []byte) err
 	}
 
 	item := &apiv1.BackendItem{
-		Key:             keychainPath + keychainKey,
+		Key:             barrierPath + keychainKey,
 		EncryptionKeyID: uint32(apiv1.CipherType_AES256_GCM),
 		Val:             snapshot,
 	}
@@ -296,7 +360,7 @@ func (b *Barrier) persistKeychain(ctx context.Context, gatekeeperKey []byte) err
 }
 
 func (b *Barrier) retrieveKeychain(ctx context.Context, gatekeeperKey []byte) (*keychain.Keychain, error) {
-	item, err := b.backend.Get(ctx, keychainPath+keychainKey)
+	item, err := b.backend.Get(ctx, barrierPath+keychainKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get keychain from backend storage: %w", err)
 	}

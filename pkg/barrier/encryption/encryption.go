@@ -5,7 +5,9 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"fmt"
+	"hash/fnv"
 	"io"
+	"sync"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
 )
@@ -14,6 +16,27 @@ const (
 	aes256GCMSize = 32
 	nonceSize     = 12
 )
+
+type aeadCache struct {
+	m  map[uint64]cipher.AEAD
+	mu sync.RWMutex
+}
+
+func (c *aeadCache) Get(key uint64) cipher.AEAD {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.m[key]
+}
+
+func (c *aeadCache) Put(key uint64, aead cipher.AEAD) {
+	c.mu.Lock()
+	c.m[key] = aead
+	c.mu.Unlock()
+}
+
+var cache = aeadCache{
+	m: map[uint64]cipher.AEAD{},
+}
 
 // ValidateKey ensures the given key is the correct length.
 func ValidateKey(cipherType apiv1.CipherType, key []byte) error {
@@ -49,6 +72,13 @@ func GenerateKey(cipherType apiv1.CipherType) ([]byte, error) {
 	}
 
 	return key, nil
+}
+
+// Uint64Hash generates a uint64 hash from the given byte slice.
+func Uint64Hash(b []byte) uint64 {
+	hash := fnv.New64a()
+	hash.Write(b)
+	return hash.Sum64()
 }
 
 // Encrypt data.
@@ -91,19 +121,28 @@ func Decrypt(cipherType apiv1.CipherType, key, data []byte) ([]byte, error) {
 }
 
 func newAES256GCM(key []byte) (cipher.AEAD, []byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	nonce := make([]byte, nonceSize)
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, nil, err
 	}
 
-	aesgcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, nil, err
+	var aesgcm cipher.AEAD
+	keyHash := Uint64Hash(key)
+
+	if aead := cache.Get(keyHash); aead != nil {
+		aesgcm = aead
+	} else {
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		aesgcm, err = cipher.NewGCM(block)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		cache.Put(keyHash, aesgcm)
 	}
 
 	return aesgcm, nonce, nil
