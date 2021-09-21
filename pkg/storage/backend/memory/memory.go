@@ -36,7 +36,7 @@ func (s *MemoryStorage) List(ctx context.Context, prefix string) ([]string, erro
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if len(prefix) > 0 && !strings.HasSuffix(prefix, "/") {
+	if !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
 
