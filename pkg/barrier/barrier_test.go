@@ -41,9 +41,8 @@ var _ = Describe("barrier", func() {
 		Expect(err).To(MatchError(ErrBarrierNotInitialized))
 		Expect(sealed).To(BeFalse())
 
-		id, err := barrier.ID(ctx)
+		_, err = barrier.ID(ctx)
 		Expect(err).To(MatchError(backend.ErrNotFound))
-		Expect(id).To(BeNil())
 	})
 
 	It("can initialize", func() {
@@ -175,7 +174,7 @@ var _ = Describe("barrier", func() {
 	It("puts a new encrypted raw value", func() {
 		data := []byte("raw byte test")
 		item := &apiv1.Item{
-			Key: "testing/key1",
+			Key: "/testing/key1",
 			Raw: data,
 		}
 
@@ -183,18 +182,18 @@ var _ = Describe("barrier", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("ensuring raw value was encrypted")
-		bitem, err := barrier.backend.Get(ctx, "testing/key1")
+		bitem, err := barrier.backend.Get(ctx, getSecretPath("/testing/key1"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bitem).NotTo(BeNil())
-		Expect(bitem.Key).To(Equal("testing/key1"))
+		Expect(bitem.Key).To(Equal(getSecretPath("/testing/key1")))
 		Expect(bitem.EncryptionKeyID).To(Equal(uint32(1)))
 		Expect(len(bitem.Val) > 15).To(BeTrue())
 
 		By("ensuring we can decrypt raw value")
-		item, err = barrier.Get(ctx, "testing/key1")
+		item, err = barrier.Get(ctx, "/testing/key1")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(item).NotTo(BeNil())
-		Expect(item.Key).To(Equal("testing/key1"))
+		Expect(item.Key).To(Equal("/testing/key1"))
 		Expect(item.Map).To(BeNil())
 		Expect(item.Raw).To(Equal(data))
 	})
@@ -204,7 +203,7 @@ var _ = Describe("barrier", func() {
 			"key": {Value: []byte("val")},
 		}
 		item := &apiv1.Item{
-			Key: "testing/key2",
+			Key: "/testing/key2",
 			Map: m,
 		}
 
@@ -212,18 +211,18 @@ var _ = Describe("barrier", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("ensuring map value was encrypted")
-		bitem, err := barrier.backend.Get(ctx, "testing/key2")
+		bitem, err := barrier.backend.Get(ctx, getSecretPath("/testing/key2"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bitem).NotTo(BeNil())
-		Expect(bitem.Key).To(Equal("testing/key2"))
+		Expect(bitem.Key).To(Equal(getSecretPath("/testing/key2")))
 		Expect(bitem.EncryptionKeyID).To(Equal(uint32(1)))
 		Expect(len(bitem.Val) > 7).To(BeTrue())
 
 		By("ensuring we can decrypt map value")
-		item, err = barrier.Get(ctx, "testing/key2")
+		item, err = barrier.Get(ctx, "/testing/key2")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(item).NotTo(BeNil())
-		Expect(item.Key).To(Equal("testing/key2"))
+		Expect(item.Key).To(Equal("/testing/key2"))
 		Expect(item.Raw).To(BeNil())
 		Expect(item.Map).NotTo(BeNil())
 		Expect(item.Map).To(HaveLen(1))
@@ -231,7 +230,7 @@ var _ = Describe("barrier", func() {
 	})
 
 	It("lists keys", func() {
-		keys, err := barrier.List(ctx, "testing/")
+		keys, err := barrier.List(ctx, "/testing/")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(keys).To(HaveLen(2))
 		Expect(keys[0]).To(Equal("key1"))
@@ -240,10 +239,10 @@ var _ = Describe("barrier", func() {
 	})
 
 	It("deletes a key", func() {
-		err := barrier.Delete(ctx, "testing/key2")
+		err := barrier.Delete(ctx, "/testing/key2")
 		Expect(err).NotTo(HaveOccurred())
 
-		item, err := barrier.Get(ctx, "testing/key2")
+		item, err := barrier.Get(ctx, "/testing/key2")
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(MatchError(backend.ErrNotFound))
 		Expect(item).To(BeNil())
@@ -265,10 +264,10 @@ var _ = Describe("barrier", func() {
 		err = barrier.Unseal(ctx, gatekeeperKey)
 		Expect(err).NotTo(HaveOccurred())
 
-		item, err := barrier.Get(ctx, "testing/key1")
+		item, err := barrier.Get(ctx, "/testing/key1")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(item).NotTo(BeNil())
-		Expect(item.Key).To(Equal("testing/key1"))
+		Expect(item.Key).To(Equal("/testing/key1"))
 		Expect(item.Map).To(BeNil())
 		Expect(item.Raw).NotTo(BeEmpty())
 	})
@@ -282,38 +281,38 @@ var _ = Describe("barrier", func() {
 		Expect(activeKey.Id).To(Equal(uint32(2)))
 
 		By("ensuring we can decrypt secrets using older keys")
-		bitem, err := barrier.backend.Get(ctx, "testing/key1")
+		bitem, err := barrier.backend.Get(ctx, getSecretPath("/testing/key1"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bitem).NotTo(BeNil())
-		Expect(bitem.Key).To(Equal("testing/key1"))
+		Expect(bitem.Key).To(Equal(getSecretPath("/testing/key1")))
 		Expect(bitem.EncryptionKeyID).To(Equal(uint32(1)))
 
-		item, err := barrier.Get(ctx, "testing/key1")
+		item, err := barrier.Get(ctx, "/testing/key1")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(item).NotTo(BeNil())
-		Expect(item.Key).To(Equal("testing/key1"))
+		Expect(item.Key).To(Equal("/testing/key1"))
 		Expect(item.Map).To(BeNil())
 		Expect(item.Raw).NotTo(BeEmpty())
 
 		By("ensuring new puts use the active key")
 		item = &apiv1.Item{
-			Key: "testing/key1",
+			Key: "/testing/key1",
 			Raw: item.Raw,
 		}
 
 		err = barrier.Put(ctx, item)
 		Expect(err).NotTo(HaveOccurred())
 
-		bitem, err = barrier.backend.Get(ctx, "testing/key1")
+		bitem, err = barrier.backend.Get(ctx, getSecretPath("/testing/key1"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bitem).NotTo(BeNil())
-		Expect(bitem.Key).To(Equal("testing/key1"))
+		Expect(bitem.Key).To(Equal(getSecretPath("/testing/key1")))
 		Expect(bitem.EncryptionKeyID).To(Equal(uint32(activeKey.Id)))
 
-		item, err = barrier.Get(ctx, "testing/key1")
+		item, err = barrier.Get(ctx, "/testing/key1")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(item).NotTo(BeNil())
-		Expect(item.Key).To(Equal("testing/key1"))
+		Expect(item.Key).To(Equal("/testing/key1"))
 		Expect(item.Map).To(BeNil())
 		Expect(item.Raw).NotTo(BeEmpty())
 	})

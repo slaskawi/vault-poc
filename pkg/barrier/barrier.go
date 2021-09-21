@@ -4,6 +4,7 @@ package barrier
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
@@ -14,7 +15,8 @@ import (
 )
 
 const (
-	barrierPath = "kstash/barrier/"
+	barrierPath = "/kstash/barrier/"
+	secretsPath = "/kstash/secrets/"
 	keychainKey = "keychain"
 	idKey       = "id"
 	idLength    = 18
@@ -223,6 +225,10 @@ func (b *Barrier) EncryptItem(item *apiv1.Item) (*apiv1.BackendItem, error) {
 		return nil, fmt.Errorf("unable to encrypt item: %s: %w", item.Key, err)
 	}
 
+	if !strings.HasPrefix(item.Key, secretsPath) {
+		item.Key = getSecretPath(item.Key)
+	}
+
 	bitem := &apiv1.BackendItem{
 		Key:             item.Key,
 		EncryptionKeyID: encKey.Id,
@@ -253,6 +259,7 @@ func (b *Barrier) DecyptItem(bitem *apiv1.BackendItem) (*apiv1.Item, error) {
 		return nil, fmt.Errorf("unable to unmarshal key: %s: %w", bitem.Key, err)
 	}
 
+	item.Key = strings.TrimPrefix(item.Key, secretsPath)
 	return item, nil
 }
 
@@ -266,7 +273,7 @@ func (b *Barrier) List(ctx context.Context, prefix string) ([]string, error) {
 		return nil, ErrBarrierSealed
 	}
 
-	return b.backend.List(ctx, prefix)
+	return b.backend.List(ctx, getSecretPath(prefix))
 }
 
 // Get an item from the storage backend.
@@ -282,7 +289,7 @@ func (b *Barrier) Get(ctx context.Context, key string) (*apiv1.Item, error) {
 		return nil, ErrDisallowedPath
 	}
 
-	bitem, err := b.backend.Get(ctx, key)
+	bitem, err := b.backend.Get(ctx, getSecretPath(key))
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +335,7 @@ func (b *Barrier) Delete(ctx context.Context, key string) error {
 		return ErrDisallowedPath
 	}
 
-	return b.backend.Delete(ctx, key)
+	return b.backend.Delete(ctx, getSecretPath(key))
 }
 
 func (b *Barrier) persistKeychain(ctx context.Context, gatekeeperKey []byte) error {
@@ -361,4 +368,8 @@ func (b *Barrier) retrieveKeychain(ctx context.Context, gatekeeperKey []byte) (*
 	}
 
 	return kc, nil
+}
+
+func getSecretPath(key string) string {
+	return secretsPath + strings.TrimPrefix(key, "/")
 }
