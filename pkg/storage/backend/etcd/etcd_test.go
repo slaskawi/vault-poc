@@ -1,4 +1,4 @@
-package memory
+package etcd
 
 import (
 	"context"
@@ -11,20 +11,20 @@ import (
 	"github.com/slaskawi/vault-poc/pkg/storage/backend"
 )
 
-func TestMemory(t *testing.T) {
+func TestEtcd(t *testing.T) {
 	defer GinkgoRecover()
 
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "memory")
+	RunSpecs(t, "etcd")
 }
 
-var _ = Describe("memory", func() {
+var _ = Describe("etcd", func() {
 	var store backend.Storage
 	ctx := context.Background()
 
-	It("can create new memory storage and load with items", func() {
+	It("can create new Etcd storage and load with items", func() {
 		var err error
-		store, err = NewMemoryStorage(nil)
+		store, err = NewEtcdStorage(nil)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = store.Put(ctx, &apiv1.BackendItem{

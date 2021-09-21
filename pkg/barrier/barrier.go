@@ -124,12 +124,6 @@ func (b *Barrier) ID(ctx context.Context) (encryption.Hash, error) {
 	return encryption.FromHash(bitem.Val), nil
 }
 
-// Backend returns the underlying `backend.Storage` used to create the Barrier.
-// Operations performed on the backend directly are not managed by the barrier.
-func (b *Barrier) Backend() backend.Storage {
-	return b.backend
-}
-
 // IsSealed determines if the secret store is initialized, but sealed.
 func (b *Barrier) IsSealed(ctx context.Context) (bool, error) {
 	initialized, err := b.IsInitialized(ctx)

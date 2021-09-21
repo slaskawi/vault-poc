@@ -23,7 +23,9 @@ func TestBarrier(t *testing.T) {
 
 var _ = Describe("barrier", func() {
 	ctx := context.Background()
-	back := memory.NewMemoryStorage()
+	back, err := memory.NewMemoryStorage(nil)
+	Expect(err).NotTo(HaveOccurred())
+
 	barrier, err := NewBarrier(back)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(barrier).NotTo(BeNil())

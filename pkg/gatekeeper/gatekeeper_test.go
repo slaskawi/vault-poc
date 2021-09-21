@@ -22,12 +22,14 @@ func TestGatekeeper(t *testing.T) {
 
 var _ = Describe("gatekeeper", func() {
 	ctx := context.Background()
-	back := memory.NewMemoryStorage()
+	back, err := memory.NewMemoryStorage(nil)
+	Expect(err).NotTo(HaveOccurred())
+
 	barr, err := barrier.NewBarrier(back)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(barr).NotTo(BeNil())
 
-	gk, err := NewGatekeeper(barr)
+	gk, err := NewGatekeeper(back, barr)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(gk).NotTo(BeNil())
 

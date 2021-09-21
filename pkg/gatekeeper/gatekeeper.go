@@ -9,6 +9,7 @@ import (
 	"github.com/slaskawi/vault-poc/pkg/barrier"
 	"github.com/slaskawi/vault-poc/pkg/barrier/encryption"
 	"github.com/slaskawi/vault-poc/pkg/gatekeeper/shamir"
+	"github.com/slaskawi/vault-poc/pkg/storage/backend"
 )
 
 const (
@@ -17,12 +18,13 @@ const (
 
 // Gatekeeper object.
 type Gatekeeper struct {
-	b *barrier.Barrier
+	back backend.Storage
+	b    *barrier.Barrier
 }
 
 // NewGatekeeper creates a new Gatekeeper object.
-func NewGatekeeper(barrier *barrier.Barrier) (*Gatekeeper, error) {
-	g := &Gatekeeper{b: barrier}
+func NewGatekeeper(backend backend.Storage, barrier *barrier.Barrier) (*Gatekeeper, error) {
+	g := &Gatekeeper{back: backend, b: barrier}
 
 	return g, nil
 }
@@ -64,7 +66,7 @@ func (g *Gatekeeper) GenerateGatekeeperToken(ctx context.Context, gatekeeperKey 
 		Val: encrypted,
 	}
 
-	if err := g.b.Backend().Put(ctx, item); err != nil {
+	if err := g.back.Put(ctx, item); err != nil {
 		return "", err
 	}
 
@@ -80,7 +82,7 @@ func (g *Gatekeeper) UnsealWithGatekeeperToken(ctx context.Context, gatekeeperTo
 		return barrier.ErrBarrierUnsealed
 	}
 
-	item, err := g.b.Backend().Get(ctx, gatekeeperPrefix+gatekeeperToken)
+	item, err := g.back.Get(ctx, gatekeeperPrefix+gatekeeperToken)
 	if err != nil {
 		return err
 	}
@@ -103,7 +105,7 @@ func (g *Gatekeeper) UnsealWithGatekeeperToken(ctx context.Context, gatekeeperTo
 
 // RevokeGatekeeperToken revokes a gatekeeper token to prevent its successful use.
 func (g *Gatekeeper) RevokeGatekeeperToken(ctx context.Context, gatekeeperToken string) error {
-	return g.b.Backend().Delete(ctx, gatekeeperPrefix+gatekeeperToken)
+	return g.back.Delete(ctx, gatekeeperPrefix+gatekeeperToken)
 }
 
 // GenerateShardedKeys generates new sharded unseal keys for the gatekeeper key.

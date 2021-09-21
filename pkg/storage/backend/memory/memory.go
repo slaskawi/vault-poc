@@ -14,15 +14,21 @@ import (
 
 // MemoryStorage object.
 type MemoryStorage struct {
-	m  map[string][]byte
-	mu sync.RWMutex
+	config *MemoryConfig
+	m      map[string][]byte
+	mu     sync.RWMutex
 }
 
 // NewMemoryStorage returns a new MemoryStorage object.
-func NewMemoryStorage() backend.Storage {
-	return &MemoryStorage{
-		m: map[string][]byte{},
+func NewMemoryStorage(config *MemoryConfig) (backend.Storage, error) {
+	if config == nil {
+		config = &MemoryConfig{}
 	}
+
+	return &MemoryStorage{
+		config: config,
+		m:      map[string][]byte{},
+	}, nil
 }
 
 // List items with keys that have the given prefix.
