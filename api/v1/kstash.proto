@@ -43,7 +43,7 @@ message Item {
 message SystemRotateRequest {}
 
 message SystemRotateResponse {
-    uint32 KeyID = 1;
+    uint32 keyID = 1;
 }
 
 message SystemStatusRequest {}

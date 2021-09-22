@@ -15,16 +15,20 @@ import (
 	"google.golang.org/grpc"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
+	"github.com/slaskawi/vault-poc/pkg/config"
 	v1 "github.com/slaskawi/vault-poc/pkg/kstash/v1"
 )
 
 var (
-	log      logr.Logger
-	grpcPort = os.Getenv("GRPC_PORT")
-	restPort = os.Getenv("REST_PORT")
+	log  logr.Logger
+	conf *config.Config
 )
 
 func main() {
+	zapLog, _ := zap.NewDevelopment()
+	log = zapr.NewLogger(zapLog)
+	conf = config.Get()
+
 	if err := listenGRPC(); err != nil {
 		log.Error(err, "listening on gRPC port")
 	}
@@ -44,7 +48,7 @@ func main() {
 
 func listenGRPC() error {
 	// initialize service
-	v1Service, err := v1.NewKStash(log)
+	v1Service, err := v1.NewKStash(log, conf)
 	if err != nil {
 		return err
 	}
@@ -66,14 +70,14 @@ func listenGRPC() error {
 		server.GracefulStop()
 	}()
 
-	listener, err := net.Listen("tcp", ":"+grpcPort)
+	listener, err := net.Listen("tcp", ":"+conf.GrpcPort)
 	if err != nil {
 		return err
 	}
 
 	// start listening
 	go func() {
-		log.Info("gRPC server listening", "port", grpcPort)
+		log.Info("gRPC server listening", "port", conf.GrpcPort)
 		server.Serve(listener)
 	}()
 
@@ -86,14 +90,14 @@ func listenREST() error {
 	// initialize gRPC client
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err := apiv1.RegisterKStashHandlerFromEndpoint(ctx, mux, "localhost:"+grpcPort, opts)
+	err := apiv1.RegisterKStashHandlerFromEndpoint(ctx, mux, "localhost:"+conf.GrpcPort, opts)
 	if err != nil {
 		return err
 	}
 
 	// initialize REST server
 	server := http.Server{
-		Addr:    ":" + restPort,
+		Addr:    ":" + conf.RestPort,
 		Handler: mux,
 	}
 
@@ -108,7 +112,7 @@ func listenREST() error {
 
 	// start listening
 	go func() {
-		log.Info("REST server listening", "port", restPort)
+		log.Info("REST server listening", "port", conf.RestPort)
 		if err := server.ListenAndServe(); err != nil {
 			if err != http.ErrServerClosed {
 				log.Error(err, "listening on REST port")
@@ -117,16 +121,4 @@ func listenREST() error {
 	}()
 
 	return nil
-}
-
-func init() {
-	if len(grpcPort) == 0 {
-		grpcPort = "8080"
-	}
-	if len(restPort) == 0 {
-		restPort = "8081"
-	}
-
-	zapLog, _ := zap.NewDevelopment()
-	log = zapr.NewLogger(zapLog)
 }

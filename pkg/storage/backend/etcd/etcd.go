@@ -15,32 +15,24 @@ import (
 
 // EtcdStorage object.
 type EtcdStorage struct {
-	config *EtcdConfig
-	c      *etcdclient.Client
+	c *etcdclient.Client
 }
 
 // NewEtcdStorage returns a new EtcdStorage object.
-func NewEtcdStorage(config *EtcdConfig) (backend.Storage, error) {
+func NewEtcdStorage(config *etcdclient.Config) (backend.Storage, error) {
 	if config == nil {
-		config = &EtcdConfig{
+		config = &etcdclient.Config{
 			Endpoints: []string{"http://127.0.0.1:2379"},
 		}
 	}
 
-	etcdConfig := &etcdclient.Config{
-		Endpoints: config.Endpoints,
-		Username:  config.Username,
-		Password:  config.Password,
-	}
-
-	c, err := etcdclient.New(*etcdConfig)
+	c, err := etcdclient.New(*config)
 	if err != nil {
 		return nil, err
 	}
 
 	return &EtcdStorage{
-		config: config,
-		c:      c,
+		c: c,
 	}, nil
 }
 
