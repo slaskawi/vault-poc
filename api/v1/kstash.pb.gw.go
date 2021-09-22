@@ -31,7 +31,7 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
-func request_KVService_SystemRotate_0(ctx context.Context, marshaler runtime.Marshaler, client KVServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_KStash_SystemRotate_0(ctx context.Context, marshaler runtime.Marshaler, client KStashClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq SystemRotateRequest
 	var metadata runtime.ServerMetadata
 
@@ -40,7 +40,7 @@ func request_KVService_SystemRotate_0(ctx context.Context, marshaler runtime.Mar
 
 }
 
-func local_request_KVService_SystemRotate_0(ctx context.Context, marshaler runtime.Marshaler, server KVServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_KStash_SystemRotate_0(ctx context.Context, marshaler runtime.Marshaler, server KStashServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq SystemRotateRequest
 	var metadata runtime.ServerMetadata
 
@@ -49,7 +49,7 @@ func local_request_KVService_SystemRotate_0(ctx context.Context, marshaler runti
 
 }
 
-func request_KVService_SystemStatus_0(ctx context.Context, marshaler runtime.Marshaler, client KVServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_KStash_SystemStatus_0(ctx context.Context, marshaler runtime.Marshaler, client KStashClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq SystemStatusRequest
 	var metadata runtime.ServerMetadata
 
@@ -58,7 +58,7 @@ func request_KVService_SystemStatus_0(ctx context.Context, marshaler runtime.Mar
 
 }
 
-func local_request_KVService_SystemStatus_0(ctx context.Context, marshaler runtime.Marshaler, server KVServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_KStash_SystemStatus_0(ctx context.Context, marshaler runtime.Marshaler, server KStashServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq SystemStatusRequest
 	var metadata runtime.ServerMetadata
 
@@ -67,24 +67,24 @@ func local_request_KVService_SystemStatus_0(ctx context.Context, marshaler runti
 
 }
 
-// RegisterKVServiceHandlerServer registers the http handlers for service KVService to "mux".
-// UnaryRPC     :call KVServiceServer directly.
+// RegisterKStashHandlerServer registers the http handlers for service KStash to "mux".
+// UnaryRPC     :call KStashServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterKVServiceHandlerFromEndpoint instead.
-func RegisterKVServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server KVServiceServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterKStashHandlerFromEndpoint instead.
+func RegisterKStashHandlerServer(ctx context.Context, mux *runtime.ServeMux, server KStashServer) error {
 
-	mux.Handle("GET", pattern_KVService_SystemRotate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_KStash_SystemRotate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kstash.v1.KVService/SystemRotate", runtime.WithHTTPPathPattern("/v1/system/rotate"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kstash.v1.KStash/SystemRotate", runtime.WithHTTPPathPattern("/v1/system/rotate"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KVService_SystemRotate_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KStash_SystemRotate_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -92,22 +92,22 @@ func RegisterKVServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, 
 			return
 		}
 
-		forward_KVService_SystemRotate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_KStash_SystemRotate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_KVService_SystemStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_KStash_SystemStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kstash.v1.KVService/SystemStatus", runtime.WithHTTPPathPattern("/v1/system/status"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kstash.v1.KStash/SystemStatus", runtime.WithHTTPPathPattern("/v1/system/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KVService_SystemStatus_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KStash_SystemStatus_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -115,16 +115,16 @@ func RegisterKVServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, 
 			return
 		}
 
-		forward_KVService_SystemStatus_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_KStash_SystemStatus_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
 	return nil
 }
 
-// RegisterKVServiceHandlerFromEndpoint is same as RegisterKVServiceHandler but
+// RegisterKStashHandlerFromEndpoint is same as RegisterKStashHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterKVServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterKStashHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
@@ -144,59 +144,59 @@ func RegisterKVServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.Serv
 		}()
 	}()
 
-	return RegisterKVServiceHandler(ctx, mux, conn)
+	return RegisterKStashHandler(ctx, mux, conn)
 }
 
-// RegisterKVServiceHandler registers the http handlers for service KVService to "mux".
+// RegisterKStashHandler registers the http handlers for service KStash to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterKVServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterKVServiceHandlerClient(ctx, mux, NewKVServiceClient(conn))
+func RegisterKStashHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterKStashHandlerClient(ctx, mux, NewKStashClient(conn))
 }
 
-// RegisterKVServiceHandlerClient registers the http handlers for service KVService
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "KVServiceClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "KVServiceClient"
+// RegisterKStashHandlerClient registers the http handlers for service KStash
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "KStashClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "KStashClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "KVServiceClient" to call the correct interceptors.
-func RegisterKVServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client KVServiceClient) error {
+// "KStashClient" to call the correct interceptors.
+func RegisterKStashHandlerClient(ctx context.Context, mux *runtime.ServeMux, client KStashClient) error {
 
-	mux.Handle("GET", pattern_KVService_SystemRotate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_KStash_SystemRotate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kstash.v1.KVService/SystemRotate", runtime.WithHTTPPathPattern("/v1/system/rotate"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kstash.v1.KStash/SystemRotate", runtime.WithHTTPPathPattern("/v1/system/rotate"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KVService_SystemRotate_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KStash_SystemRotate_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_KVService_SystemRotate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_KStash_SystemRotate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_KVService_SystemStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_KStash_SystemStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kstash.v1.KVService/SystemStatus", runtime.WithHTTPPathPattern("/v1/system/status"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kstash.v1.KStash/SystemStatus", runtime.WithHTTPPathPattern("/v1/system/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KVService_SystemStatus_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KStash_SystemStatus_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_KVService_SystemStatus_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_KStash_SystemStatus_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -204,13 +204,13 @@ func RegisterKVServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 }
 
 var (
-	pattern_KVService_SystemRotate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "system", "rotate"}, ""))
+	pattern_KStash_SystemRotate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "system", "rotate"}, ""))
 
-	pattern_KVService_SystemStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "system", "status"}, ""))
+	pattern_KStash_SystemStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "system", "status"}, ""))
 )
 
 var (
-	forward_KVService_SystemRotate_0 = runtime.ForwardResponseMessage
+	forward_KStash_SystemRotate_0 = runtime.ForwardResponseMessage
 
-	forward_KVService_SystemStatus_0 = runtime.ForwardResponseMessage
+	forward_KStash_SystemStatus_0 = runtime.ForwardResponseMessage
 )

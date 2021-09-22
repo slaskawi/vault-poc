@@ -6,12 +6,12 @@ import (
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
 )
 
-type KVService struct {
+type KStash struct {
 	log logr.Logger
 
-	apiv1.UnimplementedKVServiceServer
+	apiv1.UnimplementedKStashServer
 }
 
-func NewKVService(log logr.Logger) (apiv1.KVServiceServer, error) {
-	return &KVService{log: log}, nil
+func NewKStash(log logr.Logger) (apiv1.KStashServer, error) {
+	return &KStash{log: log}, nil
 }

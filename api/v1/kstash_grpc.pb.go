@@ -14,122 +14,122 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// KVServiceClient is the client API for KVService service.
+// KStashClient is the client API for KStash service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type KVServiceClient interface {
+type KStashClient interface {
 	SystemRotate(ctx context.Context, in *SystemRotateRequest, opts ...grpc.CallOption) (*SystemRotateResponse, error)
 	SystemStatus(ctx context.Context, in *SystemStatusRequest, opts ...grpc.CallOption) (*SystemStatusResponse, error)
 }
 
-type kVServiceClient struct {
+type kStashClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewKVServiceClient(cc grpc.ClientConnInterface) KVServiceClient {
-	return &kVServiceClient{cc}
+func NewKStashClient(cc grpc.ClientConnInterface) KStashClient {
+	return &kStashClient{cc}
 }
 
-func (c *kVServiceClient) SystemRotate(ctx context.Context, in *SystemRotateRequest, opts ...grpc.CallOption) (*SystemRotateResponse, error) {
+func (c *kStashClient) SystemRotate(ctx context.Context, in *SystemRotateRequest, opts ...grpc.CallOption) (*SystemRotateResponse, error) {
 	out := new(SystemRotateResponse)
-	err := c.cc.Invoke(ctx, "/kstash.v1.KVService/SystemRotate", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/SystemRotate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *kVServiceClient) SystemStatus(ctx context.Context, in *SystemStatusRequest, opts ...grpc.CallOption) (*SystemStatusResponse, error) {
+func (c *kStashClient) SystemStatus(ctx context.Context, in *SystemStatusRequest, opts ...grpc.CallOption) (*SystemStatusResponse, error) {
 	out := new(SystemStatusResponse)
-	err := c.cc.Invoke(ctx, "/kstash.v1.KVService/SystemStatus", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/SystemStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// KVServiceServer is the server API for KVService service.
-// All implementations must embed UnimplementedKVServiceServer
+// KStashServer is the server API for KStash service.
+// All implementations must embed UnimplementedKStashServer
 // for forward compatibility
-type KVServiceServer interface {
+type KStashServer interface {
 	SystemRotate(context.Context, *SystemRotateRequest) (*SystemRotateResponse, error)
 	SystemStatus(context.Context, *SystemStatusRequest) (*SystemStatusResponse, error)
-	mustEmbedUnimplementedKVServiceServer()
+	mustEmbedUnimplementedKStashServer()
 }
 
-// UnimplementedKVServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedKVServiceServer struct {
+// UnimplementedKStashServer must be embedded to have forward compatible implementations.
+type UnimplementedKStashServer struct {
 }
 
-func (UnimplementedKVServiceServer) SystemRotate(context.Context, *SystemRotateRequest) (*SystemRotateResponse, error) {
+func (UnimplementedKStashServer) SystemRotate(context.Context, *SystemRotateRequest) (*SystemRotateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SystemRotate not implemented")
 }
-func (UnimplementedKVServiceServer) SystemStatus(context.Context, *SystemStatusRequest) (*SystemStatusResponse, error) {
+func (UnimplementedKStashServer) SystemStatus(context.Context, *SystemStatusRequest) (*SystemStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SystemStatus not implemented")
 }
-func (UnimplementedKVServiceServer) mustEmbedUnimplementedKVServiceServer() {}
+func (UnimplementedKStashServer) mustEmbedUnimplementedKStashServer() {}
 
-// UnsafeKVServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to KVServiceServer will
+// UnsafeKStashServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to KStashServer will
 // result in compilation errors.
-type UnsafeKVServiceServer interface {
-	mustEmbedUnimplementedKVServiceServer()
+type UnsafeKStashServer interface {
+	mustEmbedUnimplementedKStashServer()
 }
 
-func RegisterKVServiceServer(s grpc.ServiceRegistrar, srv KVServiceServer) {
-	s.RegisterService(&KVService_ServiceDesc, srv)
+func RegisterKStashServer(s grpc.ServiceRegistrar, srv KStashServer) {
+	s.RegisterService(&KStash_ServiceDesc, srv)
 }
 
-func _KVService_SystemRotate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _KStash_SystemRotate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SystemRotateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(KVServiceServer).SystemRotate(ctx, in)
+		return srv.(KStashServer).SystemRotate(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kstash.v1.KVService/SystemRotate",
+		FullMethod: "/kstash.v1.KStash/SystemRotate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KVServiceServer).SystemRotate(ctx, req.(*SystemRotateRequest))
+		return srv.(KStashServer).SystemRotate(ctx, req.(*SystemRotateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _KVService_SystemStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _KStash_SystemStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SystemStatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(KVServiceServer).SystemStatus(ctx, in)
+		return srv.(KStashServer).SystemStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kstash.v1.KVService/SystemStatus",
+		FullMethod: "/kstash.v1.KStash/SystemStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KVServiceServer).SystemStatus(ctx, req.(*SystemStatusRequest))
+		return srv.(KStashServer).SystemStatus(ctx, req.(*SystemStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// KVService_ServiceDesc is the grpc.ServiceDesc for KVService service.
+// KStash_ServiceDesc is the grpc.ServiceDesc for KStash service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var KVService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "kstash.v1.KVService",
-	HandlerType: (*KVServiceServer)(nil),
+var KStash_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "kstash.v1.KStash",
+	HandlerType: (*KStashServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "SystemRotate",
-			Handler:    _KVService_SystemRotate_Handler,
+			Handler:    _KStash_SystemRotate_Handler,
 		},
 		{
 			MethodName: "SystemStatus",
-			Handler:    _KVService_SystemStatus_Handler,
+			Handler:    _KStash_SystemStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

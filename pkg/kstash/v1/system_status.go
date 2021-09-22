@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *KVService) SystemStatus(ctx context.Context, req *apiv1.SystemStatusRequest) (*apiv1.SystemStatusResponse, error) {
+func (s *KStash) SystemStatus(ctx context.Context, req *apiv1.SystemStatusRequest) (*apiv1.SystemStatusResponse, error) {
 	// TODO: finish
 	return &apiv1.SystemStatusResponse{
 		Sealed:          true,

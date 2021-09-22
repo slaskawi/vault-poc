@@ -53,7 +53,7 @@ message SystemStatusResponse {
     google.protobuf.Timestamp serverTimestamp = 2;
 }
 
-service KVService {
+service KStash {
     rpc SystemRotate(SystemRotateRequest) returns (SystemRotateResponse) {
         option (google.api.http) = {
             get: "/v1/system/rotate"

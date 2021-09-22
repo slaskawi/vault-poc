@@ -44,7 +44,7 @@ func main() {
 
 func listenGRPC() error {
 	// initialize service
-	v1Service, err := v1.NewKVService(log)
+	v1Service, err := v1.NewKStash(log)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func listenGRPC() error {
 		v1.WithStreamLogging(log),
 	}
 	server := grpc.NewServer(opts...)
-	apiv1.RegisterKVServiceServer(server, v1Service)
+	apiv1.RegisterKStashServer(server, v1Service)
 
 	// handle graceful shutdown
 	stopCh := make(chan os.Signal, 1)
@@ -86,7 +86,7 @@ func listenREST() error {
 	// initialize gRPC client
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err := apiv1.RegisterKVServiceHandlerFromEndpoint(ctx, mux, "localhost:"+grpcPort, opts)
+	err := apiv1.RegisterKStashHandlerFromEndpoint(ctx, mux, "localhost:"+grpcPort, opts)
 	if err != nil {
 		return err
 	}
