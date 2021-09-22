@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
-	v1 "github.com/slaskawi/vault-poc/pkg/kvservice/v1"
+	v1 "github.com/slaskawi/vault-poc/pkg/kstash/v1"
 )
 
 var (

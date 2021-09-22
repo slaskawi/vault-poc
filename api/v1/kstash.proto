@@ -1,5 +1,5 @@
 syntax = "proto3";
-package kvservice.v1;
+package kstash.v1;
 option go_package = "github.com/slaskawi/vault-poc/api/v1";
 
 import "google/api/annotations.proto";

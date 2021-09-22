@@ -32,7 +32,7 @@ func NewKVServiceClient(cc grpc.ClientConnInterface) KVServiceClient {
 
 func (c *kVServiceClient) SystemRotate(ctx context.Context, in *SystemRotateRequest, opts ...grpc.CallOption) (*SystemRotateResponse, error) {
 	out := new(SystemRotateResponse)
-	err := c.cc.Invoke(ctx, "/kvservice.v1.KVService/SystemRotate", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KVService/SystemRotate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (c *kVServiceClient) SystemRotate(ctx context.Context, in *SystemRotateRequ
 
 func (c *kVServiceClient) SystemStatus(ctx context.Context, in *SystemStatusRequest, opts ...grpc.CallOption) (*SystemStatusResponse, error) {
 	out := new(SystemStatusResponse)
-	err := c.cc.Invoke(ctx, "/kvservice.v1.KVService/SystemStatus", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KVService/SystemStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func _KVService_SystemRotate_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kvservice.v1.KVService/SystemRotate",
+		FullMethod: "/kstash.v1.KVService/SystemRotate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(KVServiceServer).SystemRotate(ctx, req.(*SystemRotateRequest))
@@ -108,7 +108,7 @@ func _KVService_SystemStatus_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kvservice.v1.KVService/SystemStatus",
+		FullMethod: "/kstash.v1.KVService/SystemStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(KVServiceServer).SystemStatus(ctx, req.(*SystemStatusRequest))
@@ -120,7 +120,7 @@ func _KVService_SystemStatus_Handler(srv interface{}, ctx context.Context, dec f
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var KVService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "kvservice.v1.KVService",
+	ServiceName: "kstash.v1.KVService",
 	HandlerType: (*KVServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -133,5 +133,5 @@ var KVService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "kvservice.proto",
+	Metadata: "kstash.proto",
 }

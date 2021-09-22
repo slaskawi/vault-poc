@@ -48,4 +48,4 @@ generate:
 		--grpc-gateway_out ./api/v1 \
 		--grpc-gateway_opt paths=source_relative \
 		--grpc-gateway_opt logtostderr=true \
-		api/v1/kvservice.proto
+		api/v1/kstash.proto
