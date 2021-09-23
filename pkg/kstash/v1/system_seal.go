@@ -43,5 +43,5 @@ func (s *KStash) SystemUnseal(ctx context.Context, req *apiv1.SystemUnsealReques
 		return resp, fmt.Errorf("must provide at least 2 unseal keys")
 	}
 
-	return resp, s.gk.UnsealWithShardedKeys(ctx, req.UnsealKeys)
+	return resp, s.gk.UnsealWithUnsealKeys(ctx, req.UnsealKeys)
 }

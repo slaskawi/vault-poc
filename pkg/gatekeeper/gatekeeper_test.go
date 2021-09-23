@@ -96,10 +96,10 @@ var _ = Describe("gatekeeper", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(keys).To(HaveLen(5))
 
-		err = gk.UnsealWithShardedKeys(ctx, keys[:2])
+		err = gk.UnsealWithUnsealKeys(ctx, keys[:2])
 		Expect(err).To(HaveOccurred())
 
-		err = gk.UnsealWithShardedKeys(ctx, keys[:3])
+		err = gk.UnsealWithUnsealKeys(ctx, keys[:3])
 		Expect(err).NotTo(HaveOccurred())
 
 		sealed, err := barr.IsSealed(ctx)
@@ -168,10 +168,10 @@ var _ = Describe("gatekeeper", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(token).NotTo(BeEmpty())
 
-		err = gk.UnsealWithShardedKeys(ctx, keys[:2])
+		err = gk.UnsealWithUnsealKeys(ctx, keys[:2])
 		Expect(err).To(HaveOccurred())
 
-		err = gk.UnsealWithShardedKeys(ctx, keys[:3])
+		err = gk.UnsealWithUnsealKeys(ctx, keys[:3])
 		Expect(err).NotTo(HaveOccurred())
 
 		sealed, err := barr.IsSealed(ctx)
