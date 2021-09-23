@@ -10,9 +10,9 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/slaskawi/vault-poc/pkg/barrier"
 	"github.com/slaskawi/vault-poc/pkg/gatekeeper"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend/etcd"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend/memory"
+	"github.com/slaskawi/vault-poc/pkg/storage"
+	"github.com/slaskawi/vault-poc/pkg/storage/etcd"
+	"github.com/slaskawi/vault-poc/pkg/storage/memory"
 )
 
 // Config object.
@@ -40,7 +40,7 @@ func Get() *Config {
 // Gatekeeper returns a new Gatekeeper instance from the config.
 func (c *Config) Gatekeeper(log logr.Logger) (*gatekeeper.Gatekeeper, error) {
 	var (
-		storage backend.Storage
+		storage storage.Storage
 		err     error
 	)
 

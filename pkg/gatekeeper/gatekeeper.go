@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/slaskawi/vault-poc/pkg/barrier"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend"
+	"github.com/slaskawi/vault-poc/pkg/storage"
 )
 
 const (
@@ -23,13 +23,13 @@ var (
 
 // Gatekeeper object.
 type Gatekeeper struct {
-	back backend.Storage
-	b    *barrier.Barrier
+	store storage.Storage
+	b     *barrier.Barrier
 }
 
 // NewGatekeeper creates a new Gatekeeper object.
-func NewGatekeeper(backend backend.Storage, barrier *barrier.Barrier) (*Gatekeeper, error) {
-	g := &Gatekeeper{back: backend, b: barrier}
+func NewGatekeeper(store storage.Storage, barrier *barrier.Barrier) (*Gatekeeper, error) {
+	g := &Gatekeeper{store: store, b: barrier}
 
 	return g, nil
 }

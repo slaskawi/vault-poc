@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend"
+	"github.com/slaskawi/vault-poc/pkg/storage"
 )
 
 // EtcdStorage object.
@@ -19,7 +19,7 @@ type EtcdStorage struct {
 }
 
 // NewEtcdStorage returns a new EtcdStorage object.
-func NewEtcdStorage(config *etcdclient.Config) (backend.Storage, error) {
+func NewEtcdStorage(config *etcdclient.Config) (storage.Storage, error) {
 	if config == nil {
 		config = &etcdclient.Config{
 			Endpoints: []string{"http://127.0.0.1:2379"},
@@ -85,7 +85,7 @@ func (s *EtcdStorage) Get(ctx context.Context, key string) (*apiv1.BackendItem, 
 	}
 
 	if resp == nil || resp.Kvs == nil || len(resp.Kvs) == 0 {
-		return nil, backend.ErrNotFound
+		return nil, storage.ErrNotFound
 	}
 	if len(resp.Kvs) > 1 {
 		return nil, fmt.Errorf("unexpected number of keys from Etcd")

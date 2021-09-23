@@ -10,8 +10,8 @@ import (
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
 	"github.com/slaskawi/vault-poc/pkg/barrier/encryption"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend/memory"
+	"github.com/slaskawi/vault-poc/pkg/storage"
+	"github.com/slaskawi/vault-poc/pkg/storage/memory"
 )
 
 func TestBarrier(t *testing.T) {
@@ -44,7 +44,7 @@ var _ = Describe("barrier", func() {
 		Expect(sealed).To(BeFalse())
 
 		_, err = barrier.ID(ctx)
-		Expect(err).To(MatchError(backend.ErrNotFound))
+		Expect(err).To(MatchError(storage.ErrNotFound))
 	})
 
 	It("can initialize", func() {
@@ -140,7 +140,7 @@ var _ = Describe("barrier", func() {
 
 		item, err := barrier.Get(ctx, "test")
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(MatchError(backend.ErrNotFound))
+		Expect(err).To(MatchError(storage.ErrNotFound))
 		Expect(item).To(BeNil())
 	})
 
@@ -184,7 +184,7 @@ var _ = Describe("barrier", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("ensuring raw value was encrypted")
-		bitem, err := barrier.backend.Get(ctx, getSecretPath("/testing/key1"))
+		bitem, err := barrier.store.Get(ctx, getSecretPath("/testing/key1"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bitem).NotTo(BeNil())
 		Expect(bitem.Key).To(Equal(getSecretPath("/testing/key1")))
@@ -213,7 +213,7 @@ var _ = Describe("barrier", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("ensuring map value was encrypted")
-		bitem, err := barrier.backend.Get(ctx, getSecretPath("/testing/key2"))
+		bitem, err := barrier.store.Get(ctx, getSecretPath("/testing/key2"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bitem).NotTo(BeNil())
 		Expect(bitem.Key).To(Equal(getSecretPath("/testing/key2")))
@@ -246,7 +246,7 @@ var _ = Describe("barrier", func() {
 
 		item, err := barrier.Get(ctx, "/testing/key2")
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(MatchError(backend.ErrNotFound))
+		Expect(err).To(MatchError(storage.ErrNotFound))
 		Expect(item).To(BeNil())
 	})
 
@@ -283,7 +283,7 @@ var _ = Describe("barrier", func() {
 		Expect(activeKey.Id).To(Equal(uint32(2)))
 
 		By("ensuring we can decrypt secrets using older keys")
-		bitem, err := barrier.backend.Get(ctx, getSecretPath("/testing/key1"))
+		bitem, err := barrier.store.Get(ctx, getSecretPath("/testing/key1"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bitem).NotTo(BeNil())
 		Expect(bitem.Key).To(Equal(getSecretPath("/testing/key1")))
@@ -305,7 +305,7 @@ var _ = Describe("barrier", func() {
 		err = barrier.Put(ctx, item)
 		Expect(err).NotTo(HaveOccurred())
 
-		bitem, err = barrier.backend.Get(ctx, getSecretPath("/testing/key1"))
+		bitem, err = barrier.store.Get(ctx, getSecretPath("/testing/key1"))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bitem).NotTo(BeNil())
 		Expect(bitem.Key).To(Equal(getSecretPath("/testing/key1")))

@@ -9,7 +9,7 @@ import (
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
 	"github.com/slaskawi/vault-poc/pkg/barrier"
 	"github.com/slaskawi/vault-poc/pkg/barrier/encryption"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend/memory"
+	"github.com/slaskawi/vault-poc/pkg/storage/memory"
 )
 
 func TestGatekeeper(t *testing.T) {

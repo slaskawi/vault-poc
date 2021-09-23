@@ -1,4 +1,4 @@
-// Package barrier wraps a `backend.Storage` to add an encryption/decryption layer for all secrets stored in the backend.
+// Package barrier wraps a `storage.Storage` to add an encryption/decryption layer for all secrets stored in the backend.
 package barrier
 
 import (
@@ -10,7 +10,7 @@ import (
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
 	"github.com/slaskawi/vault-poc/pkg/barrier/encryption"
 	"github.com/slaskawi/vault-poc/pkg/barrier/keychain"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend"
+	"github.com/slaskawi/vault-poc/pkg/storage"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -39,15 +39,15 @@ var disallowedPaths = map[string]struct{}{
 
 // Barrier object.
 type Barrier struct {
-	backend  backend.Storage
+	store    storage.Storage
 	keychain *keychain.Keychain
 	mu       sync.RWMutex
 }
 
 // NewBarrier returns a new Barrier object.
-func NewBarrier(backend backend.Storage) (*Barrier, error) {
+func NewBarrier(store storage.Storage) (*Barrier, error) {
 	b := &Barrier{
-		backend: backend,
+		store: store,
 	}
 
 	return b, nil
@@ -62,7 +62,7 @@ func (b *Barrier) IsInitialized(ctx context.Context) (bool, error) {
 		return true, nil
 	}
 
-	keys, err := b.backend.List(ctx, barrierPath)
+	keys, err := b.store.List(ctx, barrierPath)
 	if err != nil {
 		return false, fmt.Errorf("unable to detect initializtion: %w", err)
 	}
@@ -95,7 +95,7 @@ func (b *Barrier) Initialize(ctx context.Context, gatekeeperKey []byte) error {
 		return fmt.Errorf("unable to generate new kstash ID: %w", err)
 	}
 
-	if err := b.backend.Put(ctx, &apiv1.BackendItem{
+	if err := b.store.Put(ctx, &apiv1.BackendItem{
 		Key: barrierPath + idKey,
 		Val: idB,
 	}); err != nil {
@@ -114,9 +114,9 @@ func (b *Barrier) Initialize(ctx context.Context, gatekeeperKey []byte) error {
 }
 
 // ID gets the barrier's ID that was created during Initialization.
-// Returns `backend.ErrNotFound` if barrier has not been initialized.
+// Returns `storage.ErrNotFound` if barrier has not been initialized.
 func (b *Barrier) ID(ctx context.Context) (encryption.Hash, error) {
-	bitem, err := b.backend.Get(ctx, barrierPath+idKey)
+	bitem, err := b.store.Get(ctx, barrierPath+idKey)
 	if err != nil {
 		return encryption.Hash{}, err
 	}
@@ -267,7 +267,7 @@ func (b *Barrier) List(ctx context.Context, prefix string) ([]string, error) {
 		return nil, ErrBarrierSealed
 	}
 
-	return b.backend.List(ctx, getSecretPath(prefix))
+	return b.store.List(ctx, getSecretPath(prefix))
 }
 
 // Get an item from the storage backend.
@@ -283,7 +283,7 @@ func (b *Barrier) Get(ctx context.Context, key string) (*apiv1.Item, error) {
 		return nil, ErrDisallowedPath
 	}
 
-	bitem, err := b.backend.Get(ctx, getSecretPath(key))
+	bitem, err := b.store.Get(ctx, getSecretPath(key))
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func (b *Barrier) Put(ctx context.Context, item *apiv1.Item) error {
 		return err
 	}
 
-	return b.backend.Put(ctx, bitem)
+	return b.store.Put(ctx, bitem)
 }
 
 // Delete an item from the storage backend.
@@ -329,7 +329,7 @@ func (b *Barrier) Delete(ctx context.Context, key string) error {
 		return ErrDisallowedPath
 	}
 
-	return b.backend.Delete(ctx, getSecretPath(key))
+	return b.store.Delete(ctx, getSecretPath(key))
 }
 
 func (b *Barrier) persistKeychain(ctx context.Context, gatekeeperKey []byte) error {
@@ -343,7 +343,7 @@ func (b *Barrier) persistKeychain(ctx context.Context, gatekeeperKey []byte) err
 		EncryptionKeyID: uint32(apiv1.CipherType_AES256_GCM),
 		Val:             snapshot,
 	}
-	if err := b.backend.Put(ctx, item); err != nil {
+	if err := b.store.Put(ctx, item); err != nil {
 		return fmt.Errorf("failed to put keychain in backend storage: %w", err)
 	}
 
@@ -351,7 +351,7 @@ func (b *Barrier) persistKeychain(ctx context.Context, gatekeeperKey []byte) err
 }
 
 func (b *Barrier) retrieveKeychain(ctx context.Context, gatekeeperKey []byte) (*keychain.Keychain, error) {
-	item, err := b.backend.Get(ctx, barrierPath+keychainKey)
+	item, err := b.store.Get(ctx, barrierPath+keychainKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get keychain from backend storage: %w", err)
 	}

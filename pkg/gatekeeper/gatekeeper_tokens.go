@@ -7,7 +7,7 @@ import (
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
 	"github.com/slaskawi/vault-poc/pkg/barrier"
 	"github.com/slaskawi/vault-poc/pkg/barrier/encryption"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend"
+	"github.com/slaskawi/vault-poc/pkg/storage"
 )
 
 // GenerateGatekeeperTokenFromUnsealKeys generates a gatekeeper token that allows for unsealing without exposing the underlying gatekeeper key.
@@ -53,7 +53,7 @@ func (g *Gatekeeper) GenerateGatekeeperToken(ctx context.Context, gatekeeperKey 
 		Val: encrypted,
 	}
 
-	if err := g.back.Put(ctx, item); err != nil {
+	if err := g.store.Put(ctx, item); err != nil {
 		return "", err
 	}
 
@@ -140,18 +140,18 @@ func (g *Gatekeeper) RevokeGatekeeperToken(ctx context.Context, gatekeeperToken 
 	}
 
 	itemKey := itemKeyFromKeyHash(keyHash)
-	return g.back.Delete(ctx, gatekeeperTokensPrefix+itemKey)
+	return g.store.Delete(ctx, gatekeeperTokensPrefix+itemKey)
 }
 
 // RevokeAllGatekeeperTokens revokes all gatekeeper tokens.
 func (g *Gatekeeper) RevokeAllGatekeeperTokens(ctx context.Context) error {
-	tokens, err := g.back.List(ctx, gatekeeperTokensPrefix)
+	tokens, err := g.store.List(ctx, gatekeeperTokensPrefix)
 	if err != nil {
 		return err
 	}
 
 	for _, token := range tokens {
-		if err := g.back.Delete(ctx, gatekeeperTokensPrefix+token); err != nil {
+		if err := g.store.Delete(ctx, gatekeeperTokensPrefix+token); err != nil {
 			return err
 		}
 	}
@@ -177,9 +177,9 @@ func (g *Gatekeeper) gatekeeperKeyFromToken(ctx context.Context, gatekeeperToken
 	}
 
 	itemKey := itemKeyFromKeyHash(keyHash)
-	item, err := g.back.Get(ctx, gatekeeperTokensPrefix+itemKey)
+	item, err := g.store.Get(ctx, gatekeeperTokensPrefix+itemKey)
 	if err != nil {
-		if backend.IsErrNotFound(err) {
+		if storage.IsErrNotFound(err) {
 			return nil, ErrInvalidGatekeeperToken
 		}
 		return nil, err

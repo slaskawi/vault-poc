@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend"
+	"github.com/slaskawi/vault-poc/pkg/storage"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -20,7 +20,7 @@ type MemoryStorage struct {
 }
 
 // NewMemoryStorage returns a new MemoryStorage object.
-func NewMemoryStorage(config *MemoryConfig) (backend.Storage, error) {
+func NewMemoryStorage(config *MemoryConfig) (storage.Storage, error) {
 	if config == nil {
 		config = &MemoryConfig{}
 	}
@@ -75,7 +75,7 @@ func (s *MemoryStorage) Get(ctx context.Context, key string) (*apiv1.BackendItem
 
 	b, ok := s.m[key]
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", backend.ErrNotFound, key)
+		return nil, fmt.Errorf("%w: %s", storage.ErrNotFound, key)
 	}
 
 	item := &apiv1.BackendItem{}

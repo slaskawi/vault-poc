@@ -1,36 +1,31 @@
-package etcd
+package memory
 
 import (
 	"context"
-	"os"
 	"testing"
-
-	"go.etcd.io/etcd/server/v3/etcdmain"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
-	"github.com/slaskawi/vault-poc/pkg/storage/backend"
+	"github.com/slaskawi/vault-poc/pkg/storage"
 )
 
-func TestEtcd(t *testing.T) {
+func TestMemory(t *testing.T) {
 	defer GinkgoRecover()
 
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "etcd")
+	RunSpecs(t, "memory")
 }
 
-var _ = Describe("etcd", func() {
-	var store backend.Storage
+var _ = Describe("memory", func() {
+	var store storage.Storage
 	ctx := context.Background()
-	go etcdmain.Main([]string{"etcd"})
 
-	It("can create new Etcd storage and load with items", func() {
+	It("can create new memory storage and load with items", func() {
 		var err error
-		store, err = NewEtcdStorage(nil)
+		store, err = NewMemoryStorage(nil)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(store).NotTo(BeNil())
 
 		err = store.Put(ctx, &apiv1.BackendItem{
 			Key: "/test/key1",
@@ -84,11 +79,7 @@ var _ = Describe("etcd", func() {
 
 		item, err := store.Get(ctx, "/test/key2")
 		Expect(err).To(HaveOccurred())
-		Expect(backend.IsErrNotFound(err)).To(BeTrue())
+		Expect(storage.IsErrNotFound(err)).To(BeTrue())
 		Expect(item).To(BeNil())
-	})
-
-	AfterSuite(func() {
-		os.RemoveAll("default.etcd")
 	})
 })
