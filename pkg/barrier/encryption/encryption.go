@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	aes256GCMSize = 32
+	AES256GCMSize = 32
 	nonceSize     = 12
 )
 
@@ -48,8 +48,8 @@ func ValidateKey(cipherType apiv1.CipherType, key []byte) error {
 
 	switch cipherType {
 	case apiv1.CipherType_AES256_GCM:
-		if len(key) != aes256GCMSize {
-			return fmt.Errorf("key must be %d bytes, not %d", aes256GCMSize, len(key))
+		if len(key) != AES256GCMSize {
+			return fmt.Errorf("key must be %d bytes, not %d", AES256GCMSize, len(key))
 		}
 	default:
 		return fmt.Errorf("unknown cipherType: %s", cipherType.String())
@@ -64,7 +64,7 @@ func GenerateKey(cipherType apiv1.CipherType) ([]byte, error) {
 
 	switch cipherType {
 	case apiv1.CipherType_AES256_GCM:
-		key = make([]byte, aes256GCMSize)
+		key = make([]byte, AES256GCMSize)
 	default:
 		return nil, fmt.Errorf("unknown cipherType: %s", cipherType.String())
 	}

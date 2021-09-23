@@ -3,9 +3,9 @@ package gatekeeper
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
 	"github.com/slaskawi/vault-poc/pkg/barrier"
@@ -19,7 +19,10 @@ const (
 	shamirInfo
 )
 
-var ErrInvalidGatekeeperToken = fmt.Errorf("invalid gatekeeper token")
+var (
+	ErrInvalidGatekeeperToken = fmt.Errorf("invalid gatekeeper token")
+	ErrInvalidUnsealKey       = fmt.Errorf("invalid unseal key(s)")
+)
 
 // Gatekeeper object.
 type Gatekeeper struct {
@@ -65,21 +68,20 @@ func (g *Gatekeeper) GenerateGatekeeperToken(ctx context.Context, gatekeeperKey 
 	}
 
 	randomKeyHash := encryption.FromHash(randomKey)
-	randomKeyUin64String := randomKeyHash.Uint64String()
-	barrierID, err := g.b.ID(context.Background())
+	token := randomKeyHash.Base32()[:encryption.AES256GCMSize]
+	keyHash, err := g.keyHashFromToken(token)
 	if err != nil {
 		return "", err
 	}
 
-	keyString := randomKeyUin64String[:18] + barrierID.Uint64String() + gatekeeperPrefix
-	keyHash := sha256.Sum256([]byte(keyString))
-	encrypted, err := encryption.Encrypt(apiv1.CipherType_AES256_GCM, keyHash[:32], gatekeeperKey)
+	encrypted, err := encryption.Encrypt(apiv1.CipherType_AES256_GCM, keyHash, gatekeeperKey)
 	if err != nil {
 		return "", err
 	}
 
+	itemKey := itemKeyFromKeyHash(keyHash)
 	item := &apiv1.BackendItem{
-		Key: gatekeeperPrefix + randomKeyHash.Uint64String(),
+		Key: gatekeeperPrefix + itemKey,
 		Val: encrypted,
 	}
 
@@ -87,7 +89,7 @@ func (g *Gatekeeper) GenerateGatekeeperToken(ctx context.Context, gatekeeperKey 
 		return "", err
 	}
 
-	return randomKeyUin64String, nil
+	return formatToken(token), nil
 }
 
 // UnsealWithGatekeeperToken attempts to unseal the underlying Barrier object using a generated gatekeeper token.
@@ -145,9 +147,9 @@ func (g *Gatekeeper) RotateEncryptionKeyWithGatekeeperToken(ctx context.Context,
 	return g.b.RotateEncryptionKey(ctx, gatekeeperKey)
 }
 
-// RotateGatekeerToken will revoke the given gatekeeper token and generate a new one. This helps prevent long-lived tokens.
+// RotateGatekeeperToken will revoke the given gatekeeper token and generate a new one. This helps prevent long-lived tokens.
 // NOTE: Gatekeeper tokens should be considered secrets and should be used, rotated, or revoked as soon as possible.
-func (g *Gatekeeper) RotateGatekeerToken(ctx context.Context, gatekeeperToken string) (string, error) {
+func (g *Gatekeeper) RotateGatekeeperToken(ctx context.Context, gatekeeperToken string) (string, error) {
 	gatekeeperKey, err := g.gatekeeperKeyFromToken(ctx, gatekeeperToken)
 	if err != nil {
 		return "", err
@@ -159,7 +161,18 @@ func (g *Gatekeeper) RotateGatekeerToken(ctx context.Context, gatekeeperToken st
 
 // RevokeGatekeeperToken revokes a gatekeeper token to prevent its successful use.
 func (g *Gatekeeper) RevokeGatekeeperToken(ctx context.Context, gatekeeperToken string) error {
-	return g.back.Delete(ctx, gatekeeperPrefix+gatekeeperToken)
+	gatekeeperToken = strings.ReplaceAll(gatekeeperToken, "-", "")
+	if len(gatekeeperToken) != encryption.AES256GCMSize {
+		return ErrInvalidGatekeeperToken
+	}
+
+	keyHash, err := g.keyHashFromToken(gatekeeperToken)
+	if err != nil {
+		return err
+	}
+
+	itemKey := itemKeyFromKeyHash(keyHash)
+	return g.back.Delete(ctx, gatekeeperPrefix+itemKey)
 }
 
 // RevokeAllGatekeeperTokens revokes all gatekeeper tokens.
@@ -202,7 +215,7 @@ func (g *Gatekeeper) InitializeBarrier(ctx context.Context, parts int, threshold
 		return nil, err
 	}
 
-	unsealKeys, err := g.GenerateShardedKeys(gatekeeperKey, parts, threshold)
+	unsealKeys, err := g.GenerateUnsealKeys(gatekeeperKey, parts, threshold)
 	if err != nil {
 		return nil, err
 	}
@@ -210,11 +223,11 @@ func (g *Gatekeeper) InitializeBarrier(ctx context.Context, parts int, threshold
 	return unsealKeys, err
 }
 
-// GenerateShardedKeys generates new sharded unseal keys for the gatekeeper key.
+// GenerateUnsealKeys generates new sharded unseal keys for the gatekeeper key.
 // Parts is the number of sharded keys to generate.
 // Threshold is the number of sharded keys required to reconstruct the gatekeeper key.
 // Parts and threshold must be between 2 and 256.
-func (g *Gatekeeper) GenerateShardedKeys(gatekeeperKey []byte, parts int, threshold int) ([]string, error) {
+func (g *Gatekeeper) GenerateUnsealKeys(gatekeeperKey []byte, parts int, threshold int) ([]string, error) {
 	keyBytes, err := shamir.Split(gatekeeperKey, parts, threshold)
 	if err != nil {
 		return nil, err
@@ -228,15 +241,26 @@ func (g *Gatekeeper) GenerateShardedKeys(gatekeeperKey []byte, parts int, thresh
 	return keys, nil
 }
 
-// RotateShardedKeys generates a new set of unseal keys, replacing the existing keys, and revoking any existing gatekeeper tokens.
-func (g *Gatekeeper) RotateShardedKeys(ctx context.Context, keys []string, parts int, threshold int) ([]string, error) {
+// RotateUnsealKeys generates a new set of unseal keys, replacing the existing keys, and revoking any existing gatekeeper tokens.
+func (g *Gatekeeper) RotateUnsealKeys(ctx context.Context, keys []string, parts int, threshold int) ([]string, error) {
 	gatekeeperKey, err := g.gatekeeperKeyFromUnsealKeys(keys)
 	if err != nil {
 		return nil, err
 	}
 
+	g.b.Seal()
+	if err := g.b.Unseal(ctx, gatekeeperKey); err != nil {
+		return nil, err
+	}
+
+	newGatekeeperKey, err := encryption.GenerateKey(apiv1.CipherType_AES256_GCM)
+	if err != nil {
+		return nil, err
+	}
+
+	g.b.ChangeGatekeeperKey(ctx, newGatekeeperKey)
 	defer g.RevokeAllGatekeeperTokens(ctx)
-	return g.GenerateShardedKeys(gatekeeperKey, parts, threshold)
+	return g.GenerateUnsealKeys(newGatekeeperKey, parts, threshold)
 }
 
 // UnsealWithShardedKeys combines sharded unseal keys to reconstruct the gatekeeper key and attempt to unseal the barrier.
@@ -256,7 +280,18 @@ func (g *Gatekeeper) gatekeeperKeyFromToken(ctx context.Context, gatekeeperToken
 		return nil, barrier.ErrBarrierNotInitialized
 	}
 
-	item, err := g.back.Get(ctx, gatekeeperPrefix+gatekeeperToken)
+	gatekeeperToken = strings.ReplaceAll(gatekeeperToken, "-", "")
+	if len(gatekeeperToken) != encryption.AES256GCMSize {
+		return nil, ErrInvalidGatekeeperToken
+	}
+
+	keyHash, err := g.keyHashFromToken(gatekeeperToken)
+	if err != nil {
+		return nil, err
+	}
+
+	itemKey := itemKeyFromKeyHash(keyHash)
+	item, err := g.back.Get(ctx, gatekeeperPrefix+itemKey)
 	if err != nil {
 		if backend.IsErrNotFound(err) {
 			return nil, ErrInvalidGatekeeperToken
@@ -264,14 +299,7 @@ func (g *Gatekeeper) gatekeeperKeyFromToken(ctx context.Context, gatekeeperToken
 		return nil, err
 	}
 
-	barrierID, err := g.b.ID(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	keyString := gatekeeperToken[:18] + barrierID.Uint64String() + gatekeeperPrefix
-	keyHash := sha256.Sum256([]byte(keyString))
-	gatekeeperKey, err := encryption.Decrypt(apiv1.CipherType_AES256_GCM, keyHash[:32], item.Val)
+	gatekeeperKey, err := encryption.Decrypt(apiv1.CipherType_AES256_GCM, keyHash, item.Val)
 	if err != nil {
 		return nil, err
 	}
@@ -282,13 +310,47 @@ func (g *Gatekeeper) gatekeeperKeyFromToken(ctx context.Context, gatekeeperToken
 func (g *Gatekeeper) gatekeeperKeyFromUnsealKeys(keys []string) ([]byte, error) {
 	keyBytes := [][]byte{}
 	for _, key := range keys {
+		if len(key) < 42 || len(key) > 46 {
+			return nil, ErrInvalidUnsealKey
+		}
 		kb, err := base64.RawStdEncoding.DecodeString(key)
 		if err != nil {
-			return nil, err
+			return nil, ErrInvalidUnsealKey
 		}
 
 		keyBytes = append(keyBytes, kb)
 	}
 
-	return shamir.Combine(keyBytes)
+	key, err := shamir.Combine(keyBytes)
+	if err != nil {
+		return nil, ErrInvalidUnsealKey
+	}
+
+	return key, nil
+}
+
+func (g *Gatekeeper) keyHashFromToken(token string) ([]byte, error) {
+	barrierID, err := g.b.ID(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	keyString := token + barrierID.Base64()
+	return encryption.BytesHash(keyString)[:encryption.AES256GCMSize], nil
+}
+
+func itemKeyFromKeyHash(keyHash []byte) string {
+	itemKey := encryption.FromHash(keyHash)
+	return itemKey.Base32()[:10]
+}
+
+func formatToken(token string) string {
+	buf := strings.Builder{}
+	for i := 0; i < len(token); i += 4 {
+		if i > 0 {
+			buf.WriteString("-")
+		}
+		buf.WriteString(token[i : i+4])
+	}
+	return buf.String()
 }

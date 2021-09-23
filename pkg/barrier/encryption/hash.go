@@ -2,6 +2,7 @@ package encryption
 
 import (
 	"crypto/sha256"
+	"encoding/base32"
 	"encoding/base64"
 	"encoding/hex"
 	"hash/fnv"
@@ -34,6 +35,11 @@ func (h *Hash) Uint64() uint64 {
 // Uint64String returns a string representation of the FNV-1a hash.
 func (h *Hash) Uint64String() string {
 	return strconv.FormatUint(h.Uint64(), 10)
+}
+
+// Base32 returns a base32-encoded string representation of the byte slice.
+func (h *Hash) Base32() string {
+	return base32.HexEncoding.EncodeToString(h.b)
 }
 
 // Base64 returns a base64-encoded string representation of the byte slice.

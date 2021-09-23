@@ -81,7 +81,7 @@ message SystemRotateUnsealKeysRequest {
 }
 
 message SystemRotateUnsealKeysResponse {
-    repeated string unsealKeys = 2;
+    repeated string unsealKeys = 1;
 }
 
 message SystemSealRequest {

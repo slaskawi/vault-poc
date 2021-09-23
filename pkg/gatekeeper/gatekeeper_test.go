@@ -92,7 +92,7 @@ var _ = Describe("gatekeeper", func() {
 	})
 
 	It("should generate sharded unseal keys and use those keys to unseal the barrier", func() {
-		keys, err := gk.GenerateShardedKeys(gatekeeperKey, 5, 3)
+		keys, err := gk.GenerateUnsealKeys(gatekeeperKey, 5, 3)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(keys).To(HaveLen(5))
 
@@ -122,7 +122,7 @@ var _ = Describe("gatekeeper", func() {
 	})
 
 	It("should use renewed token to rotate itself", func() {
-		token, err = gk.RotateGatekeerToken(ctx, token)
+		token, err = gk.RotateGatekeeperToken(ctx, token)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(token).NotTo(BeEmpty())
 
@@ -207,7 +207,7 @@ var _ = Describe("gatekeeper", func() {
 	})
 
 	It("should rotate sharded unseal keys and remove existing gatekeeper tokens", func() {
-		keys, err := gk.RotateShardedKeys(ctx, keys, 5, 3)
+		keys, err := gk.RotateUnsealKeys(ctx, keys, 5, 3)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(keys).To(HaveLen(5))
 

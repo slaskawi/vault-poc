@@ -14,13 +14,13 @@ func (s *KStash) SystemRotateEncryptionKey(ctx context.Context, req *apiv1.Syste
 func (s *KStash) SystemRotateGatekeeperToken(ctx context.Context, req *apiv1.SystemRotateGatekeeperTokenRequest) (*apiv1.SystemRotateGatekeeperTokenResponse, error) {
 	var err error
 	resp := &apiv1.SystemRotateGatekeeperTokenResponse{}
-	resp.GatekeeperToken, err = s.gk.RotateGatekeerToken(ctx, req.GatekeeperToken)
+	resp.GatekeeperToken, err = s.gk.RotateGatekeeperToken(ctx, req.GatekeeperToken)
 	return resp, err
 }
 
 func (s *KStash) SystemRotateUnsealKeys(ctx context.Context, req *apiv1.SystemRotateUnsealKeysRequest) (*apiv1.SystemRotateUnsealKeysResponse, error) {
 	var err error
 	resp := &apiv1.SystemRotateUnsealKeysResponse{}
-	resp.UnsealKeys, err = s.gk.RotateShardedKeys(ctx, req.UnsealKeys, int(req.NumUnsealKeys), int(req.UnsealKeyThreshold))
+	resp.UnsealKeys, err = s.gk.RotateUnsealKeys(ctx, req.UnsealKeys, int(req.NumUnsealKeys), int(req.UnsealKeyThreshold))
 	return resp, err
 }
