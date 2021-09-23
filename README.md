@@ -49,6 +49,9 @@ Normally, unsealing the barrier requires unseal keys to reconstruct the gatekeep
 In order to use the secret store, you need yet another secret to unlock it. In this case, unseal keys can grant undesired levels of permissions. Gatekeeper tokens provide a way to unseal K-Stash without exposing unseal keys.
 These tokens do not serve any purpose other than unsealing the barrier and cannot be used for priviledge escalation. They should still be considered secrets, but do not require the same level of protection that unseal keys do.
 
+Gatekeeper tokens are designed to be single-use tokens. However, they can be renewed during quick, successive operations to prevent the churn of generating new tokens when multiple operations are required. They can also be rotated.
+Ideally, gatekeeper tokens are not used as long-lived tokens, but rather everytime they are used, they get replaced with a rotated token to ensure that compromised tokens have a limited window of usefulness.
+
 ## Developing
 The following are required:
 * Go v1.16+
