@@ -8,9 +8,21 @@ import (
 )
 
 func (s *KStash) SystemStatus(ctx context.Context, req *apiv1.SystemStatusRequest) (*apiv1.SystemStatusResponse, error) {
-	// TODO: finish
-	return &apiv1.SystemStatusResponse{
+	var err error
+	resp := &apiv1.SystemStatusResponse{
 		Sealed:          true,
 		ServerTimestamp: timestamppb.Now(),
-	}, nil
+	}
+
+	resp.Initialized, err = s.gk.Barrier().IsInitialized(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if !resp.Initialized {
+		return resp, nil
+	}
+
+	resp.Sealed, err = s.gk.Barrier().IsSealed(ctx)
+	return resp, err
 }

@@ -18,8 +18,13 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type KStashClient interface {
-	SystemRotate(ctx context.Context, in *SystemRotateRequest, opts ...grpc.CallOption) (*SystemRotateResponse, error)
+	SystemGenerateGatekeeperToken(ctx context.Context, in *SystemGenerateGatekeeperTokenRequest, opts ...grpc.CallOption) (*SystemGenerateGatekeeperTokenResponse, error)
+	SystemInitialize(ctx context.Context, in *SystemInitializeRequest, opts ...grpc.CallOption) (*SystemInitializeResponse, error)
+	SystemRotateEncryptionKey(ctx context.Context, in *SystemRotateEncryptionKeyRequest, opts ...grpc.CallOption) (*SystemRotateEncryptionKeyResponse, error)
+	SystemRotateGatekeeperToken(ctx context.Context, in *SystemRotateGatekeeperTokenRequest, opts ...grpc.CallOption) (*SystemRotateGatekeeperTokenResponse, error)
+	SystemSeal(ctx context.Context, in *SystemSealRequest, opts ...grpc.CallOption) (*SystemSealResponse, error)
 	SystemStatus(ctx context.Context, in *SystemStatusRequest, opts ...grpc.CallOption) (*SystemStatusResponse, error)
+	SystemUnseal(ctx context.Context, in *SystemUnsealRequest, opts ...grpc.CallOption) (*SystemUnsealResponse, error)
 }
 
 type kStashClient struct {
@@ -30,9 +35,45 @@ func NewKStashClient(cc grpc.ClientConnInterface) KStashClient {
 	return &kStashClient{cc}
 }
 
-func (c *kStashClient) SystemRotate(ctx context.Context, in *SystemRotateRequest, opts ...grpc.CallOption) (*SystemRotateResponse, error) {
-	out := new(SystemRotateResponse)
-	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/SystemRotate", in, out, opts...)
+func (c *kStashClient) SystemGenerateGatekeeperToken(ctx context.Context, in *SystemGenerateGatekeeperTokenRequest, opts ...grpc.CallOption) (*SystemGenerateGatekeeperTokenResponse, error) {
+	out := new(SystemGenerateGatekeeperTokenResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/SystemGenerateGatekeeperToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kStashClient) SystemInitialize(ctx context.Context, in *SystemInitializeRequest, opts ...grpc.CallOption) (*SystemInitializeResponse, error) {
+	out := new(SystemInitializeResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/SystemInitialize", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kStashClient) SystemRotateEncryptionKey(ctx context.Context, in *SystemRotateEncryptionKeyRequest, opts ...grpc.CallOption) (*SystemRotateEncryptionKeyResponse, error) {
+	out := new(SystemRotateEncryptionKeyResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/SystemRotateEncryptionKey", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kStashClient) SystemRotateGatekeeperToken(ctx context.Context, in *SystemRotateGatekeeperTokenRequest, opts ...grpc.CallOption) (*SystemRotateGatekeeperTokenResponse, error) {
+	out := new(SystemRotateGatekeeperTokenResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/SystemRotateGatekeeperToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kStashClient) SystemSeal(ctx context.Context, in *SystemSealRequest, opts ...grpc.CallOption) (*SystemSealResponse, error) {
+	out := new(SystemSealResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/SystemSeal", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -48,12 +89,26 @@ func (c *kStashClient) SystemStatus(ctx context.Context, in *SystemStatusRequest
 	return out, nil
 }
 
+func (c *kStashClient) SystemUnseal(ctx context.Context, in *SystemUnsealRequest, opts ...grpc.CallOption) (*SystemUnsealResponse, error) {
+	out := new(SystemUnsealResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/SystemUnseal", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KStashServer is the server API for KStash service.
 // All implementations must embed UnimplementedKStashServer
 // for forward compatibility
 type KStashServer interface {
-	SystemRotate(context.Context, *SystemRotateRequest) (*SystemRotateResponse, error)
+	SystemGenerateGatekeeperToken(context.Context, *SystemGenerateGatekeeperTokenRequest) (*SystemGenerateGatekeeperTokenResponse, error)
+	SystemInitialize(context.Context, *SystemInitializeRequest) (*SystemInitializeResponse, error)
+	SystemRotateEncryptionKey(context.Context, *SystemRotateEncryptionKeyRequest) (*SystemRotateEncryptionKeyResponse, error)
+	SystemRotateGatekeeperToken(context.Context, *SystemRotateGatekeeperTokenRequest) (*SystemRotateGatekeeperTokenResponse, error)
+	SystemSeal(context.Context, *SystemSealRequest) (*SystemSealResponse, error)
 	SystemStatus(context.Context, *SystemStatusRequest) (*SystemStatusResponse, error)
+	SystemUnseal(context.Context, *SystemUnsealRequest) (*SystemUnsealResponse, error)
 	mustEmbedUnimplementedKStashServer()
 }
 
@@ -61,11 +116,26 @@ type KStashServer interface {
 type UnimplementedKStashServer struct {
 }
 
-func (UnimplementedKStashServer) SystemRotate(context.Context, *SystemRotateRequest) (*SystemRotateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SystemRotate not implemented")
+func (UnimplementedKStashServer) SystemGenerateGatekeeperToken(context.Context, *SystemGenerateGatekeeperTokenRequest) (*SystemGenerateGatekeeperTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SystemGenerateGatekeeperToken not implemented")
+}
+func (UnimplementedKStashServer) SystemInitialize(context.Context, *SystemInitializeRequest) (*SystemInitializeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SystemInitialize not implemented")
+}
+func (UnimplementedKStashServer) SystemRotateEncryptionKey(context.Context, *SystemRotateEncryptionKeyRequest) (*SystemRotateEncryptionKeyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SystemRotateEncryptionKey not implemented")
+}
+func (UnimplementedKStashServer) SystemRotateGatekeeperToken(context.Context, *SystemRotateGatekeeperTokenRequest) (*SystemRotateGatekeeperTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SystemRotateGatekeeperToken not implemented")
+}
+func (UnimplementedKStashServer) SystemSeal(context.Context, *SystemSealRequest) (*SystemSealResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SystemSeal not implemented")
 }
 func (UnimplementedKStashServer) SystemStatus(context.Context, *SystemStatusRequest) (*SystemStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SystemStatus not implemented")
+}
+func (UnimplementedKStashServer) SystemUnseal(context.Context, *SystemUnsealRequest) (*SystemUnsealResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SystemUnseal not implemented")
 }
 func (UnimplementedKStashServer) mustEmbedUnimplementedKStashServer() {}
 
@@ -80,20 +150,92 @@ func RegisterKStashServer(s grpc.ServiceRegistrar, srv KStashServer) {
 	s.RegisterService(&KStash_ServiceDesc, srv)
 }
 
-func _KStash_SystemRotate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SystemRotateRequest)
+func _KStash_SystemGenerateGatekeeperToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SystemGenerateGatekeeperTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(KStashServer).SystemRotate(ctx, in)
+		return srv.(KStashServer).SystemGenerateGatekeeperToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kstash.v1.KStash/SystemRotate",
+		FullMethod: "/kstash.v1.KStash/SystemGenerateGatekeeperToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KStashServer).SystemRotate(ctx, req.(*SystemRotateRequest))
+		return srv.(KStashServer).SystemGenerateGatekeeperToken(ctx, req.(*SystemGenerateGatekeeperTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KStash_SystemInitialize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SystemInitializeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).SystemInitialize(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/SystemInitialize",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).SystemInitialize(ctx, req.(*SystemInitializeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KStash_SystemRotateEncryptionKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SystemRotateEncryptionKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).SystemRotateEncryptionKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/SystemRotateEncryptionKey",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).SystemRotateEncryptionKey(ctx, req.(*SystemRotateEncryptionKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KStash_SystemRotateGatekeeperToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SystemRotateGatekeeperTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).SystemRotateGatekeeperToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/SystemRotateGatekeeperToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).SystemRotateGatekeeperToken(ctx, req.(*SystemRotateGatekeeperTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KStash_SystemSeal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SystemSealRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).SystemSeal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/SystemSeal",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).SystemSeal(ctx, req.(*SystemSealRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -116,6 +258,24 @@ func _KStash_SystemStatus_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KStash_SystemUnseal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SystemUnsealRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).SystemUnseal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/SystemUnseal",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).SystemUnseal(ctx, req.(*SystemUnsealRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KStash_ServiceDesc is the grpc.ServiceDesc for KStash service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -124,12 +284,32 @@ var KStash_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*KStashServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SystemRotate",
-			Handler:    _KStash_SystemRotate_Handler,
+			MethodName: "SystemGenerateGatekeeperToken",
+			Handler:    _KStash_SystemGenerateGatekeeperToken_Handler,
+		},
+		{
+			MethodName: "SystemInitialize",
+			Handler:    _KStash_SystemInitialize_Handler,
+		},
+		{
+			MethodName: "SystemRotateEncryptionKey",
+			Handler:    _KStash_SystemRotateEncryptionKey_Handler,
+		},
+		{
+			MethodName: "SystemRotateGatekeeperToken",
+			Handler:    _KStash_SystemRotateGatekeeperToken_Handler,
+		},
+		{
+			MethodName: "SystemSeal",
+			Handler:    _KStash_SystemSeal_Handler,
 		},
 		{
 			MethodName: "SystemStatus",
 			Handler:    _KStash_SystemStatus_Handler,
+		},
+		{
+			MethodName: "SystemUnseal",
+			Handler:    _KStash_SystemUnseal_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

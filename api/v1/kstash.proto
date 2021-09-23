@@ -40,29 +40,123 @@ message Item {
     map<string, google.protobuf.Any> map = 3;
 }
 
-message SystemRotateRequest {}
+message SystemGenerateGatekeeperTokenRequest {
+    repeated string unsealKeys = 1;
+}
 
-message SystemRotateResponse {
-    uint32 keyID = 1;
+message SystemGenerateGatekeeperTokenResponse {
+    string gatekeeperToken = 1;
+}
+
+message SystemInitializeRequest {
+    uint32 numUnsealKeys = 1;
+    uint32 unsealKeyThreshold = 2;
+    bool generateGatekeeperToken = 3;
+}
+
+message SystemInitializeResponse {
+    repeated string unsealKeys = 1;
+    string gatekeeperToken = 2;
+}
+
+message SystemRotateEncryptionKeyRequest {
+    string gatekeeperToken = 1;
+    bool renew = 2;
+}
+
+message SystemRotateEncryptionKeyResponse {}
+
+message SystemRotateGatekeeperTokenRequest {
+    string gatekeeperToken = 1;
+}
+
+message SystemRotateGatekeeperTokenResponse {
+    string gatekeeperToken = 1;
+}
+
+message SystemRotateUnsealKeysRequest {
+    repeated string unsealKeys = 1;
+    uint32 numUnsealKeys = 2;
+    uint32 unsealKeyThreshold = 3;
+}
+
+message SystemRotateUnsealKeysResponse {
+    repeated string unsealKeys = 2;
+}
+
+message SystemSealRequest {
+    string gatekeeperToken = 1;
+    bool renew = 2;
+}
+
+message SystemSealResponse {
+    bool sealed = 1;
 }
 
 message SystemStatusRequest {}
 
 message SystemStatusResponse {
+    google.protobuf.Timestamp serverTimestamp = 1;
+    bool initialized = 2;
+    bool sealed = 3;
+}
+
+message SystemUnsealRequest {
+    repeated string unsealKeys = 1;
+    string gatekeeperToken = 2;
+    bool renewGatekeeperToken = 3;
+}
+
+message SystemUnsealResponse {
     bool sealed = 1;
-    google.protobuf.Timestamp serverTimestamp = 2;
 }
 
 service KStash {
-    rpc SystemRotate(SystemRotateRequest) returns (SystemRotateResponse) {
+    rpc SystemGenerateGatekeeperToken(SystemGenerateGatekeeperTokenRequest) returns (SystemGenerateGatekeeperTokenResponse) {
         option (google.api.http) = {
-            get: "/v1/system/rotate"
+            post: "/v1/system/generate/gatekeeper"
+            body: "*"
+        };
+    }
+
+    rpc SystemInitialize(SystemInitializeRequest) returns (SystemInitializeResponse) {
+        option (google.api.http) = {
+            post: "/v1/system/initialize"
+            body: "*"
+        };
+    }
+
+    rpc SystemRotateEncryptionKey(SystemRotateEncryptionKeyRequest) returns (SystemRotateEncryptionKeyResponse) {
+        option (google.api.http) = {
+            post: "/v1/system/rotate/encryption"
+            body: "*"
+        };
+    }
+
+    rpc SystemRotateGatekeeperToken(SystemRotateGatekeeperTokenRequest) returns (SystemRotateGatekeeperTokenResponse) {
+        option (google.api.http) = {
+            post: "/v1/system/rotate/gatekeeper"
+            body: "*"
+        };
+    }
+
+    rpc SystemSeal(SystemSealRequest) returns (SystemSealResponse) {
+        option (google.api.http) = {
+            post: "/v1/system/seal"
+            body: "*"
         };
     }
 
     rpc SystemStatus(SystemStatusRequest) returns (SystemStatusResponse) {
         option (google.api.http) = {
             get: "/v1/system/status"
+        };
+    }
+
+    rpc SystemUnseal(SystemUnsealRequest) returns (SystemUnsealResponse) {
+        option (google.api.http) = {
+            post: "/v1/system/unseal"
+            body: "*"
         };
     }
 }
