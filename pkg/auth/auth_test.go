@@ -215,7 +215,16 @@ var _ = Describe("acls", func() {
 
 	It("allows expected permissions", func() {
 		for path, exPerms := range expected {
-			perms, err := am.CalculatePermissions(acls, path)
+			perms, err := am.CalculatePermissions(acls, "", path)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(perms).NotTo(BeNil())
+			Expect(perms).To(ConsistOf(exPerms), path)
+		}
+	})
+
+	It("allows expected permissions with a namespace", func() {
+		for path, exPerms := range expected {
+			perms, err := am.CalculatePermissions(acls, "/my/namespace/", path)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(perms).NotTo(BeNil())
 			Expect(perms).To(ConsistOf(exPerms), path)
@@ -223,12 +232,22 @@ var _ = Describe("acls", func() {
 	})
 
 	It("correctly reports if an action can be performed", func() {
-		err := am.CanPerform(acls, apiv1.Permission_UPDATE, "/test/kv/folder1/item2")
+		err := am.CanPerform(acls, apiv1.Permission_UPDATE, "", "/test/kv/folder1/item2")
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	It("correctly reports if an action can be performed with namespace", func() {
+		err := am.CanPerform(acls, apiv1.Permission_UPDATE, "/my/namespace", "/test/kv/folder1/item2")
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("fail if path matches but permission is not allowed", func() {
-		err := am.CanPerform(acls, apiv1.Permission_DELETE, "/test/kv/folder1/item2")
+		err := am.CanPerform(acls, apiv1.Permission_DELETE, "", "/test/kv/folder1/item2")
+		Expect(err).To(MatchError(ErrForbidden))
+	})
+
+	It("fail if path matches but permission is not allowed with namespace", func() {
+		err := am.CanPerform(acls, apiv1.Permission_DELETE, "/my/namespace", "/test/kv/folder1/item2")
 		Expect(err).To(MatchError(ErrForbidden))
 	})
 
@@ -237,7 +256,7 @@ var _ = Describe("acls", func() {
 		err := am.ValidateACLs(acls)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = am.CanPerform(acls, apiv1.Permission_LIST, "/")
+		err = am.CanPerform(acls, apiv1.Permission_LIST, "", "/")
 		Expect(err).To(MatchError(ErrForbidden))
 	})
 

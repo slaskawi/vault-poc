@@ -18,12 +18,12 @@ func NewACLManager() *ACLManager {
 
 // CanPerform determines if the requested action is allowed to be performed based on its ACLs.
 // An error is returned if the action is not allowed to peformed.
-func (m *ACLManager) CanPerform(acls []*apiv1.ACL, perm apiv1.Permission, path string) error {
+func (m *ACLManager) CanPerform(acls []*apiv1.ACL, perm apiv1.Permission, namespace, path string) error {
 	if len(acls) == 0 {
 		return ErrForbidden
 	}
 
-	permissions, err := m.CalculatePermissions(acls, path)
+	permissions, err := m.CalculatePermissions(acls, namespace, path)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (m *ACLManager) ValidateACLs(acls []*apiv1.ACL) error {
 }
 
 // CalculatePermissions calculates the permissions for the given ACLs and path.
-func (m *ACLManager) CalculatePermissions(acls []*apiv1.ACL, path string) ([]apiv1.Permission, error) {
+func (m *ACLManager) CalculatePermissions(acls []*apiv1.ACL, namespace, path string) ([]apiv1.Permission, error) {
 	if err := m.ValidateACLs(acls); err != nil {
 		return nil, err
 	}
@@ -72,12 +72,12 @@ func (m *ACLManager) CalculatePermissions(acls []*apiv1.ACL, path string) ([]api
 		return len(acls[i].Path) < len(acls[j].Path) && acls[i].Path < acls[j].Path
 	})
 
-	path = strings.TrimPrefix(path, "/")
+	path = strings.Trim(namespace, "/") + "/" + strings.TrimPrefix(path, "/")
 	noPermissions := []apiv1.Permission{}
 	permissions := noPermissions
 
 	for _, acl := range acls {
-		p := strings.TrimPrefix(acl.Path, "/")
+		p := strings.Trim(namespace, "/") + "/" + strings.TrimPrefix(acl.Path, "/")
 
 		if path == p {
 			if acl.Permissions[0] == apiv1.Permission_DENY {
