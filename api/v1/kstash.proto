@@ -52,7 +52,7 @@ enum Permission {
 
 // ACL is an access control list for an access token.
 message ACL {
-    string prefix = 1;
+    string path = 1;
     repeated Permission permissions = 2;
 }
 

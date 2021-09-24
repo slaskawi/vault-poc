@@ -21,7 +21,7 @@ func TestAuth(t *testing.T) {
 	RunSpecs(t, "auth")
 }
 
-var _ = Describe("auth", func() {
+var _ = Describe("token", func() {
 	ctx := context.Background()
 
 	back, err := memory.NewMemoryStorage(nil)
@@ -151,5 +151,144 @@ var _ = Describe("auth", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(t).NotTo(BeNil())
 		Expect(t.ExpiresAt > token.ExpiresAt).To(BeTrue())
+	})
+})
+
+var _ = Describe("acls", func() {
+	acls := []*apiv1.ACL{
+		{
+			Path:        "/*",
+			Permissions: []apiv1.Permission{apiv1.Permission_LIST},
+		},
+		{
+			Path:        "/test/kv/item1",
+			Permissions: []apiv1.Permission{apiv1.Permission_READ},
+		},
+		{
+			Path:        "/test/kv/folder1/*",
+			Permissions: []apiv1.Permission{apiv1.Permission_LIST, apiv1.Permission_READ},
+		},
+		{
+			Path:        "/test/kv/folder1/dropbox/*",
+			Permissions: []apiv1.Permission{apiv1.Permission_CREATE},
+		},
+		{
+			Path:        "/test/kv/folder1/deny/*",
+			Permissions: []apiv1.Permission{apiv1.Permission_DENY},
+		},
+		{
+			Path:        "/test/kv/folder1/item2",
+			Permissions: []apiv1.Permission{apiv1.Permission_READ, apiv1.Permission_CREATE, apiv1.Permission_UPDATE},
+		},
+		{
+			Path:        "/test/kv/folder1/denyItem",
+			Permissions: []apiv1.Permission{apiv1.Permission_DENY},
+		},
+		{
+			Path:        "/test/kv/myfolder/*",
+			Permissions: []apiv1.Permission{apiv1.Permission_LIST, apiv1.Permission_READ, apiv1.Permission_CREATE, apiv1.Permission_UPDATE, apiv1.Permission_DELETE},
+		},
+	}
+
+	expected := map[string][]apiv1.Permission{
+		"/":                                       {apiv1.Permission_LIST},
+		"foo/":                                    {apiv1.Permission_LIST},
+		"/test/":                                  {apiv1.Permission_LIST},
+		"/test/kv/":                               {apiv1.Permission_LIST},
+		"/test/kv/item1":                          {apiv1.Permission_READ},
+		"/test/kv/item2":                          {apiv1.Permission_LIST},
+		"/test/kv/folder1/":                       {apiv1.Permission_LIST, apiv1.Permission_READ},
+		"/test/kv/folder1/testItem":               {apiv1.Permission_LIST, apiv1.Permission_READ},
+		"/test/kv/folder2":                        {apiv1.Permission_LIST},
+		"/test/kv/folder1/dropbox":                {apiv1.Permission_LIST, apiv1.Permission_READ},
+		"/test/kv/folder1/dropbox/":               {apiv1.Permission_CREATE},
+		"/test/kv/folder1/dropbox/myitem":         {apiv1.Permission_CREATE},
+		"/test/kv/folder1/denyItem":               {},
+		"/test/kv/folder1/deny/":                  {},
+		"/test/kv/folder1/deny/anyItem":           {},
+		"/test/kv/folder1/item2":                  {apiv1.Permission_READ, apiv1.Permission_CREATE, apiv1.Permission_UPDATE},
+		"/test/kv/myfolder/":                      {apiv1.Permission_LIST, apiv1.Permission_READ, apiv1.Permission_CREATE, apiv1.Permission_UPDATE, apiv1.Permission_DELETE},
+		"/test/kv/myfolder/f1/f2/f3/f4/f5/myitem": {apiv1.Permission_LIST, apiv1.Permission_READ, apiv1.Permission_CREATE, apiv1.Permission_UPDATE, apiv1.Permission_DELETE},
+	}
+
+	am := NewACLManager()
+
+	It("allows expected permissions", func() {
+		for path, exPerms := range expected {
+			perms, err := am.CalculatePermissions(acls, path)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(perms).NotTo(BeNil())
+			Expect(perms).To(ConsistOf(exPerms), path)
+		}
+	})
+
+	It("correctly reports if an action can be performed", func() {
+		err := am.CanPerform(acls, apiv1.Permission_UPDATE, "/test/kv/folder1/item2")
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	It("fail if path matches but permission is not allowed", func() {
+		err := am.CanPerform(acls, apiv1.Permission_DELETE, "/test/kv/folder1/item2")
+		Expect(err).To(MatchError(ErrForbidden))
+	})
+
+	It("should cause a nil list of ACLs to forbid access", func() {
+		var acls []*apiv1.ACL
+		err := am.ValidateACLs(acls)
+		Expect(err).NotTo(HaveOccurred())
+
+		err = am.CanPerform(acls, apiv1.Permission_LIST, "/")
+		Expect(err).To(MatchError(ErrForbidden))
+	})
+
+	It("should fail with misused wildcard", func() {
+		acls := append(acls, &apiv1.ACL{
+			Path:        "/test/*/",
+			Permissions: []apiv1.Permission{apiv1.Permission_LIST},
+		})
+		err := am.ValidateACLs(acls)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("should fail with a nil ACL", func() {
+		acls := append(acls, nil)
+		err := am.ValidateACLs(acls)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("should fail with missing path", func() {
+		acls := append(acls, &apiv1.ACL{
+			Path:        "",
+			Permissions: []apiv1.Permission{apiv1.Permission_LIST},
+		})
+		err := am.ValidateACLs(acls)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("should fail with nil permissions", func() {
+		acls := append(acls, &apiv1.ACL{
+			Path:        "/test/",
+			Permissions: nil,
+		})
+		err := am.ValidateACLs(acls)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("should fail with zero permissions", func() {
+		acls := append(acls, &apiv1.ACL{
+			Path:        "/test/",
+			Permissions: []apiv1.Permission{},
+		})
+		err := am.ValidateACLs(acls)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("should fail if DENY is used with other permissions", func() {
+		acls := append(acls, &apiv1.ACL{
+			Path:        "/test/",
+			Permissions: []apiv1.Permission{apiv1.Permission_DENY, apiv1.Permission_LIST},
+		})
+		err := am.ValidateACLs(acls)
+		Expect(err).To(HaveOccurred())
 	})
 })
