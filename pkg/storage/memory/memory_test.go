@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -81,5 +82,38 @@ var _ = Describe("memory", func() {
 		Expect(err).To(HaveOccurred())
 		Expect(storage.IsErrNotFound(err)).To(BeTrue())
 		Expect(item).To(BeNil())
+	})
+
+	It("can aquire a lock to prevent concurrent distributed operations", func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		mu, err := store.LockKey(ctx, "/test/key1")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(mu).NotTo(BeNil())
+
+		err = mu.Lock()
+		Expect(err).NotTo(HaveOccurred())
+
+		item, err := mu.Get()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(item).NotTo(BeNil())
+
+		go func() {
+			defer GinkgoRecover()
+
+			ctx, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
+			defer cancel()
+
+			err = store.Put(ctx, item)
+			Expect(err).NotTo(HaveOccurred())
+		}()
+
+		time.Sleep(50 * time.Millisecond)
+		err = mu.Unlock()
+		Expect(err).NotTo(HaveOccurred())
+
+		err = store.Put(ctx, item)
+		Expect(err).NotTo(HaveOccurred())
 	})
 })

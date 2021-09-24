@@ -9,6 +9,8 @@ import (
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
 )
 
+var data = []byte("some super secret text I don't want anyone to see!")
+
 func TestEncryption(t *testing.T) {
 	defer GinkgoRecover()
 
@@ -20,7 +22,6 @@ var _ = Describe("encryption", func() {
 	key, err := GenerateKey(apiv1.CipherType_AES256_GCM)
 	Expect(err).NotTo(HaveOccurred())
 
-	data := []byte("some super secret text I don't want anyone to see!")
 	var encrypted []byte
 
 	It("errors on invalid key", func() {
@@ -70,5 +71,28 @@ var _ = Describe("encryption", func() {
 		_, err = Decrypt(cipherType, key, data)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("unknown cipherType"))
+	})
+})
+
+var _ = Describe("hash", func() {
+	It("creates a Hash object", func() {
+		h := FromHash(data)
+		Expect(h.b).To(Equal(data))
+	})
+
+	It("creates a Hash object by performing a SHA-256 hash", func() {
+		h := Sha256(data)
+		Expect(len(h.b) > 10).To(BeTrue())
+		Expect(h.Base64()).To(Equal("VisynIPk-qYz7TbVvqF8KEd0xLtWYZuTiMMbcevYf2s"))
+	})
+
+	It("creates a Hash object and validates its encoding functions", func() {
+		h := FromHash(data)
+		Expect(h.b).To(Equal(data))
+		Expect(h.Base32()).To(Equal("EDNMQP90EDQN0PBI41PMAORICLQ20T35F1Q20I90CHNMS9RK41RM2RJK41GMSUBFDPII0T3F41PMAP91"))
+		Expect(h.Base64()).To(Equal("c29tZSBzdXBlciBzZWNyZXQgdGV4dCBJIGRvbid0IHdhbnQgYW55b25lIHRvIHNlZSE"))
+		Expect(h.Hex()).To(Equal("736f6d65207375706572207365637265742074657874204920646f6e27742077616e7420616e796f6e6520746f2073656521"))
+		Expect(h.Uint64()).To(Equal(uint64(12099483423728366993)))
+		Expect(h.Uint64String()).To(Equal("12099483423728366993"))
 	})
 })

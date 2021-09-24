@@ -40,16 +40,16 @@ func Get() *Config {
 // Gatekeeper returns a new Gatekeeper instance from the config.
 func (c *Config) Gatekeeper(log logr.Logger) (*gatekeeper.Gatekeeper, error) {
 	var (
-		storage storage.Storage
-		err     error
+		store storage.Storage
+		err   error
 	)
 
 	switch c.StorageBackend {
 	case "memory":
-		storage, err = memory.NewMemoryStorage(nil)
+		store, err = memory.NewMemoryStorage(nil)
 		log.Info("WARNING: using in-memory storage backend, nothing will be persisted to disk")
 	case "etcd":
-		storage, err = etcd.NewEtcdStorage(&etcdclient.Config{
+		store, err = etcd.NewEtcdStorage(&etcdclient.Config{
 			Endpoints: c.EtcdEndpoints,
 			Username:  c.EtcdUsername,
 			Password:  c.EtcdPassword,
@@ -58,16 +58,24 @@ func (c *Config) Gatekeeper(log logr.Logger) (*gatekeeper.Gatekeeper, error) {
 		return nil, fmt.Errorf("unknown storage backend: %s", c.StorageBackend)
 	}
 
+	capabilities := store.Capabilities()
+	if !capabilities.Has(storage.CapabilityDistributedLocking) {
+		log.Info("WARNING: the configured storage backend does not support distributed locking, writes to keys will take a last-one wins approach to concurrent writes")
+	}
+	if !capabilities.Has(storage.CapabilityWatching) {
+		log.Info("WARNING: the configured storage backend does not support watching for changes in keys, this functionality will be disabled")
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
-	barr, err := barrier.NewBarrier(storage)
+	barr, err := barrier.NewBarrier(store)
 	if err != nil {
 		return nil, err
 	}
 
-	return gatekeeper.NewGatekeeper(storage, barr)
+	return gatekeeper.NewGatekeeper(store, barr)
 }
 
 func getEnv(name, ifEmpty string) string {

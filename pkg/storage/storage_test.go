@@ -11,3 +11,16 @@ func TestIsErrNotFound(t *testing.T) {
 		t.Fatal("expected ErrNotFound, got:", err)
 	}
 }
+
+func TestCapabilities(t *testing.T) {
+	cap := CapabilityDistributedLocking | CapabilityWatching
+	if !cap.Has(CapabilityDistributedLocking) {
+		t.Fatal("unexpected cap:", cap)
+	}
+	if !cap.Has(CapabilityWatching) {
+		t.Fatal("unexpected cap:", cap)
+	}
+	if cap.Has(CapabilityNone) {
+		t.Fatal("unexpected cap:", cap)
+	}
+}

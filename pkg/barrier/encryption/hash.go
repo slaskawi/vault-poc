@@ -25,6 +25,16 @@ func FromHash(b []byte) Hash {
 	return Hash{b: b}
 }
 
+// FromBase64 creates a new Hash object by performing a base64 decode on the given string.
+func FromBase64(s string) Hash {
+	b, err := base64.RawURLEncoding.DecodeString(s)
+	if err != nil {
+		return Hash{b: []byte{}}
+	}
+
+	return Hash{b: b}
+}
+
 // Uint64 returns an FNV-1a representation of the byte slice.
 func (h *Hash) Uint64() uint64 {
 	hash := fnv.New64a()
@@ -44,7 +54,7 @@ func (h *Hash) Base32() string {
 
 // Base64 returns a base64-encoded string representation of the byte slice.
 func (h *Hash) Base64() string {
-	return base64.RawStdEncoding.EncodeToString(h.b)
+	return base64.RawURLEncoding.EncodeToString(h.b)
 }
 
 // Hex returns a hex-encoded string representation of the byte slice.

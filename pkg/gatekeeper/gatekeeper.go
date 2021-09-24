@@ -9,10 +9,9 @@ import (
 )
 
 const (
-	gatekeeperPrefix             = "kstash/gatekeeper/"
-	gatekeeperTokensPrefix       = gatekeeperPrefix + "/tokens/"
-	gatekeeperAccessTokensPrefix = gatekeeperPrefix + "/accessTokens/"
-	accessKeyHashKey             = gatekeeperPrefix + "accessKeyHash"
+	gatekeeperPrefix       = "/kstash/gatekeeper/"
+	gatekeeperTokensPrefix = gatekeeperPrefix + "/tokens/"
+	accessKeyHashKey       = gatekeeperPrefix + "accessKeyHash"
 )
 
 var (

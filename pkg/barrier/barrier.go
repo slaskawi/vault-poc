@@ -332,6 +332,22 @@ func (b *Barrier) Delete(ctx context.Context, key string) error {
 	return b.store.Delete(ctx, getSecretPath(key))
 }
 
+// LockKey locks a key using the storage backend's Mutex (if supported).
+func (b *Barrier) LockKey(ctx context.Context, key string) (storage.Mutex, error) {
+	sealed, err := b.IsSealed(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if sealed {
+		return nil, ErrBarrierSealed
+	}
+	if _, ok := disallowedPaths[key]; ok {
+		return nil, ErrDisallowedPath
+	}
+
+	return b.store.LockKey(ctx, getSecretPath(key))
+}
+
 func (b *Barrier) persistKeychain(ctx context.Context, gatekeeperKey []byte) error {
 	snapshot, err := b.keychain.Snapshot(gatekeeperKey)
 	if err != nil {

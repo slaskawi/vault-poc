@@ -32,11 +32,13 @@ The barrier's keychain is encrypted using a gatekeeper key. This allows the keyc
 Unseal keys are based on [Shamir's Secret Sharing](https://en.wikipedia.org/wiki/Shamir%27s_Secret_Sharing). The gatekeeper key is split (or sharded) into multiple separate unseal keys.
 This allows multiple trusted operators to hold one or more keys without requiring a single operator to have all keys.
 By combining a certain number of unseal keys (i.e. the threshold), the gatekeeper key can be reconstructed which allows for the barrier to be unsealed.
-Unseal keys should be heavily secured, as they not only allow unsealing of the secret store, but can allow for priviledge escalation.
-Rotating unseal keys automatically rotates the gatekeeper key.
+Unseal keys should be heavily secured. Rotating unseal keys automatically rotates the gatekeeper key.
 
 Unseal keys can also be used to generate gatekeeper tokens (NOTE: these are different from gatekeeper keys). Gatekeeper tokens can simplify and secure the unsealing process while protecting the unseal keys.
 Gatekeeper tokens can only be used for barrier seal/unseal operations and do not grant encrypted read/write permissions to the barrier.
+
+### Access Keys
+Access keys are used to generate local access tokens, which can be used to grant root access to data encrypted in the barrier. Access keys should be heavily secured.
 
 ### Gatekeeper
 The gatekeeper manages the barrier and its unsealing methods and administrative operations. Unseal keys and gatekeeper tokens are issued by the gatekeeper. It provides mechanisms to rotate encryption keys and unseal keys.
@@ -46,10 +48,12 @@ Being able to rotate these keys at any given time increases the security of the 
 When K-Stash is first started, it is uninitialized, meaning that it has no encryption keys or unseal keys. An initialization must take place where unseal keys are generated for the first time.
 As mentioned earlier, unseal keys should be guarded with care. These keys are used to reconstruct the gatekeeper key, which is then used to decrypt the barrier's keychain to allow for encrypted read and write operations.
 
+Initializing also provides an access keys, which are used for generating local access tokens. This key should also be guarded with care, as it can generate root and audit access tokens that have access to all data in the barrier.
+
 ### Gatekeeper Tokens
 Normally, unsealing the barrier requires unseal keys to reconstruct the gatekeeper key. However, when automating the unseal process, you will usually run into the "zero secret" issue, which creates a sort of chicken and egg problem:
 In order to use the secret store, you need yet another secret to unlock it. In this case, unseal keys can grant undesired levels of permissions. Gatekeeper tokens provide a way to unseal K-Stash without exposing unseal or gatekeeper keys.
-These tokens do not serve any purpose other than sealing/unsealing the barrier and rotating certain keys. They cannot be used for priviledge escalation or data access. They should still be considered secrets, but do not require the same level of protection that unseal keys do.
+These tokens do not serve any purpose other than sealing/unsealing the barrier and rotating certain keys. They cannot be used for privilege escalation or data access. They should still be considered secrets, but do not require the same level of protection that unseal keys do.
 
 Gatekeeper tokens are designed to be single-use tokens. However, they can be renewed during quick, successive operations to prevent the churn of generating new tokens when multiple operations are required. They can also be rotated.
 Ideally, gatekeeper tokens are not used as long-lived tokens, but rather everytime they are used, they get replaced with a rotated token to ensure that compromised tokens have a limited window of usefulness.
@@ -57,12 +61,15 @@ Ideally, gatekeeper tokens are not used as long-lived tokens, but rather everyti
 Besides automated unsealing, gatekeeper tokens can also be used to provde a production operations team with the ability to manually unseal the barrier without giving them the unseal keys, or access to the data in the barrier.
 The K-Stash service owner could provide that team with several "emergency tokens" in the event that K-Stash is restarted and there is no unseal automation, or the automation is not working as expected.
 
+### Access Tokens
+Access tokens are generated for consumers to provide them access to the encrypted data within the barrier. Access controls can limit a token's capabilities based on path prefix. By default, they expire after one hour, but can be renewed or revoked as needed.
+
 ## Security Considerations
-K-Stash takes a separation of concerns approach to ensure data security by defining a list of personas and providing each with the least-priviledged access required.
+K-Stash takes a separation of concerns approach to ensure data security by defining a list of personas and providing each with the least-privileged access required.
 
 ### Personas
 #### Service Owners
-Service owners install/manages k-Stash instances. This persona is responsible for securing the unseal keys and should distribute them in such a way that there are never enough unseal keys in a single location to unseal the barrier.
+Service owners install/manages K-Stash instances. This persona is responsible for securing the unseal keys and should distribute them in such a way that there are never enough unseal keys in a single location to unseal the barrier.
 This persona needs to seal/unseal the barrier and rotate encryption keys and unseal keys.
 This persona does not need access to encrypted data stored in the barrier.
 
@@ -71,16 +78,26 @@ Technicians are operations or site reliability engineers. In an outage situation
 This persona needs to seal/unseal the barrier. In the event of a suspected leakage of keys or tokens, a technician is able to rotate them with the exception of unseal keys.
 This persona does not need the unseal keys or access to encrypted data stored in the barrier.
 
-#### Developers
-Developers are consumers of K-Stash. This persona stores secrets into K-Stash with the expectation that they are reasonably secured. This persona also expects their applications to retrieve secrets from K-Stash at runtime.
-This persona needs access to encrypted data stored in the barrier.
+#### Consumers
+Consumers, either users or developers are consumers of K-Stash. This persona stores and retrieves secrets from K-Stash with the expectation that they are reasonably secured.
+This persona needs read and write access to their encrypted data stored in the barrier.
+This persona does not need the unseal keys, gatekeeper tokens, or access to data owned by other consumers/groups of consumers.
+
+#### Auditors
+Auditors are consumers of K-Stash. This persona views audit logs and may need to inspect the contents of the encrypted data.
+This persona needs read access to all encrypted data stored in the barrier.
+This persona does not need the unseal keys, gatekeeper tokens, or write access to the barrier.
+
+#### Privileged
+User or automation that need to access to read and write access to all data in the barrier. **NOTE**: This type of use is highly discouraged and should be avoided.
+This persona needs read and write access to all encrypted data stored in the barrier.
 This persona does not need the unseal keys or gatekeeper tokens.
 
 ### Storage Backends
 Storage backends should be reasonably secured. The compromise of a storage backend alone is not enough to allow for data leakage as the data is encrypted.
 However, with additional information such as unseal keys and/or gatekeeper tokens, it is possible to reconstruct the gatekeeper key which would allow for the decryption of the barrier's keychain and its encryption keys.
 
-### Keys and Tokens
+### Unseal Keys and Gatekeeper Tokens
 Protection of the gatekeeper key is essential. K-Stash never exposes the gatekeeper key directly, but is represented as a set of unseal keys. These keys must be kept secure and should not all be kept in the same place.
 A single compromised unseal key is not enough to reconstruct the gatekeeper key. Multiple compromised unseal keys could reconstruct the gatekeeper key, which can be used to seal and unseal the barrier and potentially access encrypted data.
 A compromised gatekeeper token cannot reconstruct the gatekeeper key, which makes the the preferred method of sealing and unsealing the barrier.
@@ -92,14 +109,21 @@ There are several scenareos where a compromise could occur. Understanding some o
 One or more unseal keys have been compromised.
 
 * Severity: High
-* Result: An attacker can seal/unseal the barrier and rotate the unseal keys, which could prevent access to barrier, but the data in the barrier is still secure
+* Result: An attacker can seal/unseal the barrier and rotate the unseal keys, which could prevent access to barrier, but the data in the barrier cannot be accessed
 * Action: Rotate the unseal keys, which will automatically rotate the gatekeeper key and revoke all existing gatekeeper tokens
+
+#### Access Key
+One or more access keys have been compromised.
+
+* Severity: High
+* Result: An attacker can generate an access token to read and write all data in the barrier, but cannot seal/unseal the barrier
+* Action: Rotate the access key and revoke any undesired access tokens that may have been generated
 
 #### Gatekeeper Token
 One or more gatekeeper tokens have been compromised.
 
 * Severity: Medium
-* Result: An attacker can seal/unseal the barrier and rotate the encryption key, but would not compromise the barrier
+* Result: An attacker can seal/unseal the barrier and rotate the encryption key, but the data in the barrier cannot be accessed
 * Action: Rotate the gatekeeper token
 
 #### Storage Backend

@@ -40,6 +40,34 @@ message Item {
     map<string, google.protobuf.Any> map = 3;
 }
 
+// Permission for an ACL.
+enum Permission {
+    DENY = 0;
+    LIST = 1;
+    READ = 2;
+    CREATE = 3;
+    UPDATE = 4;
+    DELETE = 5;
+}
+
+// ACL is an access control list for an access token.
+message ACL {
+    string prefix = 1;
+    repeated Permission permissions = 2;
+}
+
+// AccessToken an access token used for authentication and authorization.
+message AccessToken {
+    string id = 1;
+    string referenceID = 2;
+    string namespace = 3;
+    int64 createdAt = 4;
+    int64 enabledAt = 5;
+    int64 expiresAt = 6;
+    map<string, string> metadata = 7;
+    repeated ACL acls = 8;
+}
+
 message SystemGenerateGatekeeperTokenRequest {
     repeated string unsealKeys = 1;
 }

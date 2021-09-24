@@ -105,3 +105,38 @@ func (s *MemoryStorage) Delete(ctx context.Context, key string) error {
 	delete(s.m, key)
 	return nil
 }
+
+// Capabilities determines the additional capabilities of the backend.
+func (s *MemoryStorage) Capabilities() storage.Capability {
+	return storage.CapabilityNone
+}
+
+// LockKey locks a key.
+func (s *MemoryStorage) LockKey(ctx context.Context, key string) (storage.Mutex, error) {
+	item, err := s.Get(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Mutex{item: item}, nil
+}
+
+// Mutex object.
+type Mutex struct {
+	item *apiv1.BackendItem
+}
+
+// Lock does nothing.
+func (m *Mutex) Lock() error {
+	return nil
+}
+
+// Unlock does nothing.
+func (m *Mutex) Unlock() error {
+	return nil
+}
+
+// Get key value.
+func (m *Mutex) Get() (*apiv1.BackendItem, error) {
+	return m.item, nil
+}

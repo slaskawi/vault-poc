@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	etcdclient "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 	"google.golang.org/protobuf/proto"
 
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
@@ -111,4 +112,89 @@ func (s *EtcdStorage) Put(ctx context.Context, item *apiv1.BackendItem) error {
 func (s *EtcdStorage) Delete(ctx context.Context, key string) error {
 	_, err := s.c.Delete(ctx, key)
 	return err
+}
+
+// Capabilities determines the capabilities of the backend.
+func (s *EtcdStorage) Capabilities() storage.Capability {
+	return storage.CapabilityDistributedLocking | storage.CapabilityWatching
+}
+
+// LockKey creates a distributed lock for the given key in the backend.
+func (s *EtcdStorage) LockKey(ctx context.Context, key string) (storage.Mutex, error) {
+	return &Mutex{
+		s:   s,
+		ctx: ctx,
+		key: key,
+	}, nil
+}
+
+// Mutex object.
+type Mutex struct {
+	s        *EtcdStorage
+	ctx      context.Context
+	key      string
+	locked   bool
+	eSession *concurrency.Session
+	eMutex   *concurrency.Mutex
+}
+
+// Lock the key.
+func (m *Mutex) Lock() error {
+	if err := m.newSession(); err != nil {
+		return err
+	}
+
+	if m.locked {
+		return storage.ErrLocked
+	}
+
+	select {
+	case _, ok := <-m.eSession.Done():
+		if !ok {
+			if err := m.newSession(); err != nil {
+				return err
+			}
+		}
+	default:
+	}
+
+	if err := m.eMutex.Lock(m.ctx); err != nil {
+		if err == context.Canceled {
+			return nil
+		}
+		return err
+	}
+
+	if _, err := m.s.c.Put(m.ctx, m.eMutex.Key(), "locked", etcdclient.WithLease(m.eSession.Lease())); err != nil {
+		return err
+	}
+
+	m.locked = true
+	return nil
+}
+
+// Unlock the key.
+func (m *Mutex) Unlock() error {
+	return m.eMutex.Unlock(m.ctx)
+}
+
+// Get value of the key.
+func (m *Mutex) Get() (*apiv1.BackendItem, error) {
+	return m.s.Get(m.ctx, m.key)
+}
+
+func (m *Mutex) newSession() error {
+	if m.eSession != nil && m.eMutex != nil {
+		return nil
+	}
+
+	session, err := concurrency.NewSession(m.s.c, concurrency.WithContext(m.ctx))
+	if err != nil {
+		return err
+	}
+
+	m.eSession = session
+	m.eMutex = concurrency.NewMutex(session, m.key)
+
+	return nil
 }
