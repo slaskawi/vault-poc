@@ -34,7 +34,7 @@ var _ = Describe("token", func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(gatekeeperKey).NotTo(BeNil())
 
-	err = barr.Initialize(ctx, gatekeeperKey)
+	err = barr.Initialize(ctx, gatekeeperKey, nil)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = barr.Unseal(ctx, gatekeeperKey)

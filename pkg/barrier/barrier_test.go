@@ -48,7 +48,7 @@ var _ = Describe("barrier", func() {
 	})
 
 	It("can initialize", func() {
-		err := barrier.Initialize(ctx, gatekeeperKey)
+		err := barrier.Initialize(ctx, gatekeeperKey, nil)
 		Expect(err).NotTo(HaveOccurred())
 
 		initialized, err := barrier.IsInitialized(ctx)
@@ -63,6 +63,16 @@ var _ = Describe("barrier", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(id).NotTo(BeNil())
 		Expect(id.Uint64String()).NotTo(BeEmpty())
+	})
+
+	It("can validate gatekeeper key", func() {
+		err := barrier.ValidateGatekeeperKey(ctx, gatekeeperKey)
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	It("fails to validate bad gatekeeper key", func() {
+		err := barrier.ValidateGatekeeperKey(ctx, []byte("32characters1234567890abcdefghij"))
+		Expect(err).To(HaveOccurred())
 	})
 
 	It("can unseal", func() {

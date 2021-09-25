@@ -32,7 +32,11 @@ func (g *Gatekeeper) InitializeBarrier(ctx context.Context, parts int, threshold
 		return nil, err
 	}
 
-	err = g.b.Initialize(ctx, gatekeeperKey)
+	err = g.b.Initialize(ctx, gatekeeperKey, func() error {
+		_, err := g.generateAccessKey(ctx)
+		return err
+	})
+
 	if err != nil {
 		return nil, err
 	}

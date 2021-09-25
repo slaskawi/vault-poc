@@ -77,7 +77,7 @@ func (b *Barrier) IsInitialized(ctx context.Context) (bool, error) {
 }
 
 // Initialize will create a new Keychain only if one doesn't already exist.
-func (b *Barrier) Initialize(ctx context.Context, gatekeeperKey []byte) error {
+func (b *Barrier) Initialize(ctx context.Context, gatekeeperKey []byte, extraInit func() error) error {
 	initialized, err := b.IsInitialized(ctx)
 	if err != nil {
 		return err
@@ -108,7 +108,20 @@ func (b *Barrier) Initialize(ctx context.Context, gatekeeperKey []byte) error {
 		return fmt.Errorf("failed to create keychain: %w", err)
 	}
 
+	// perform any additional initialization steps
+	if extraInit != nil {
+		// we need to release the lock to perform additional read/write ops or this will deadlock
+		b.mu.Unlock()
+		if err := extraInit(); err != nil {
+			return err
+		}
+		// re-lock after successful additional read/write ops
+		b.mu.Lock()
+	}
+
 	err = b.persistKeychain(ctx, gatekeeperKey)
+
+	// seal immediately after initializing
 	b.keychain = nil
 	return err
 }
@@ -138,6 +151,12 @@ func (b *Barrier) IsSealed(ctx context.Context) (bool, error) {
 	defer b.mu.RUnlock()
 
 	return b.keychain == nil, nil
+}
+
+// ValidateGatekeeperKey validates that the given gatekeeper key is valid.
+func (b *Barrier) ValidateGatekeeperKey(ctx context.Context, gatekeeperKey []byte) error {
+	_, err := b.retrieveKeychain(ctx, gatekeeperKey)
+	return err
 }
 
 // Unseal uses the given gatekeeper key to decrypt the Keychain. If the key is invalid, the unseal operation will fail.

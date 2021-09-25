@@ -37,9 +37,8 @@ func (g *Gatekeeper) RotateUnsealKeys(ctx context.Context, keys []string, parts 
 		return nil, err
 	}
 
-	g.b.Seal()
-	if err := g.b.Unseal(ctx, gatekeeperKey); err != nil {
-		return nil, err
+	if err := g.b.ValidateGatekeeperKey(ctx, gatekeeperKey); err != nil {
+		return nil, ErrInvalidUnsealKey
 	}
 
 	newGatekeeperKey, err := encryption.GenerateKey(apiv1.CipherType_AES256_GCM)

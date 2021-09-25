@@ -60,7 +60,7 @@ var _ = Describe("gatekeeper", func() {
 	})
 
 	It("should generate gatekeeper tokens from an initialized barrier", func() {
-		err := barr.Initialize(ctx, gatekeeperKey)
+		err := barr.Initialize(ctx, gatekeeperKey, nil)
 		Expect(err).NotTo(HaveOccurred())
 
 		token, err = gk.GenerateGatekeeperToken(ctx, gatekeeperKey)
@@ -179,6 +179,13 @@ var _ = Describe("gatekeeper", func() {
 		Expect(sealed).To(BeFalse())
 	})
 
+	It("should have generated an accessKey", func() {
+		item, err := barr.Get(ctx, accessKeyHashKey)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(item).NotTo(BeNil())
+		Expect(item.Raw).NotTo(BeEmpty())
+	})
+
 	It("should seal with a valid gatekeeper token", func() {
 		err = gk.SealWithGatekeeperToken(ctx, token, false)
 		Expect(err).NotTo(HaveOccurred())
@@ -219,5 +226,69 @@ var _ = Describe("gatekeeper", func() {
 		_, err = gk.InitializeBarrier(ctx, 5, 3)
 		Expect(err).NotTo(BeNil())
 		Expect(err).To(MatchError(barrier.ErrBarrierAlreadyInitialized))
+	})
+
+	It("should unseal again with new keys", func() {
+		err := gk.UnsealWithUnsealKeys(ctx, keys)
+		Expect(err).NotTo(HaveOccurred())
+
+		sealed, err := barr.IsSealed(ctx)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(sealed).To(BeFalse())
+	})
+
+	It("should generate an access token with correct access key", func() {
+		item, err := barr.Get(ctx, accessKeyHashKey)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(item).NotTo(BeNil())
+		Expect(item.Raw).NotTo(BeEmpty())
+
+		token, err := gk.tm.NewToken()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(token).NotTo(BeNil())
+
+		token.Acls = []*apiv1.ACL{
+			{
+				Path:        "/*",
+				Permissions: []apiv1.Permission{apiv1.Permission_LIST, apiv1.Permission_READ},
+			},
+		}
+
+		token, err = gk.GenerateAccessToken(ctx, string(item.Raw), token)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(token).NotTo(BeNil())
+		Expect(gk.tm.IsTokenValid(token)).NotTo(HaveOccurred())
+	})
+
+	It("should fail to generate an audit access token with bad access key", func() {
+		token, err := gk.tm.NewToken()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(token).NotTo(BeNil())
+
+		token, err = gk.GenerateAccessToken(ctx, string("not-gonna-happen"), token)
+		Expect(err).To(MatchError(ErrInvalidAccessKey))
+		Expect(token).To(BeNil())
+	})
+
+	It("should rotate the access key", func() {
+		item, err := barr.Get(ctx, accessKeyHashKey)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(item).NotTo(BeNil())
+		Expect(item.Raw).NotTo(BeEmpty())
+
+		newAccessKey, err := gk.RotateAccessKey(ctx, string(item.Raw))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(newAccessKey).NotTo(Equal(string(item.Raw)))
+	})
+
+	It("should rotate the access key with unseal keys", func() {
+		item, err := barr.Get(ctx, accessKeyHashKey)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(item).NotTo(BeNil())
+		Expect(item.Raw).NotTo(BeEmpty())
+
+		newAccessKey, err := gk.RotateAccessKeyWithUnsealKeys(ctx, keys)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(newAccessKey).NotTo(Equal(string(item.Raw)))
 	})
 })

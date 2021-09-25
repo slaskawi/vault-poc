@@ -68,6 +68,19 @@ message AccessToken {
     repeated ACL acls = 8;
 }
 
+message SystemGenerateAccessTokenRequest {
+    string accessKey = 1;
+    string namespace = 2;
+    int64 enabledAt = 3;
+    int64 expiresAt = 4;
+    map<string, string> metadata = 5;
+    repeated ACL acls = 6;
+}
+
+message SystemGenerateAccessTokenResponse {
+    AccessToken token = 1;
+}
+
 message SystemGenerateGatekeeperTokenRequest {
     repeated string unsealKeys = 1;
 }
@@ -85,6 +98,15 @@ message SystemInitializeRequest {
 message SystemInitializeResponse {
     repeated string unsealKeys = 1;
     string gatekeeperToken = 2;
+}
+
+message SystemRotateAccessKeyRequest {
+    string accessKey = 1;
+    repeated string unsealKeys = 2;
+}
+
+message SystemRotateAccessKeyResponse {
+    string accessKey = 1;
 }
 
 message SystemRotateEncryptionKeyRequest {
@@ -140,6 +162,13 @@ message SystemUnsealResponse {
 }
 
 service KStash {
+    rpc SystemGenerateAccessToken(SystemGenerateAccessTokenRequest) returns (SystemGenerateAccessTokenResponse) {
+        option (google.api.http) = {
+            post: "/v1/system/generate/token"
+            body: "*"
+        };
+    }
+
     rpc SystemGenerateGatekeeperToken(SystemGenerateGatekeeperTokenRequest) returns (SystemGenerateGatekeeperTokenResponse) {
         option (google.api.http) = {
             post: "/v1/system/generate/gatekeeper"
@@ -150,6 +179,13 @@ service KStash {
     rpc SystemInitialize(SystemInitializeRequest) returns (SystemInitializeResponse) {
         option (google.api.http) = {
             post: "/v1/system/initialize"
+            body: "*"
+        };
+    }
+
+    rpc SystemRotateAccessKey(SystemRotateAccessKeyRequest) returns (SystemRotateAccessKeyResponse) {
+        option (google.api.http) = {
+            post: "/v1/system/rotate/access"
             body: "*"
         };
     }
