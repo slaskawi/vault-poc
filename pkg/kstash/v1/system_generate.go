@@ -19,7 +19,8 @@ func (s *KStash) SystemGenerateAccessToken(ctx context.Context, req *apiv1.Syste
 	token.Metadata = req.Metadata
 	token.Namespace = req.Namespace
 
-	resp.Token, err = s.gk.GenerateAccessToken(ctx, req.AccessKey, token)
+	resp.Token = token
+	err = s.gk.SaveAccessTokenWithAccessKey(ctx, req.AccessKey, resp.Token)
 	return resp, err
 }
 

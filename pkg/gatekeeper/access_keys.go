@@ -35,18 +35,13 @@ func (g *Gatekeeper) NewToken() (*apiv1.AccessToken, error) {
 	return g.tm.NewToken()
 }
 
-// GenerateAuditAccessToken generates a new audit access token from the given access key.
-// An audit token is granted read-only access to all encrypted data in the barrier.
-func (g *Gatekeeper) GenerateAccessToken(ctx context.Context, accessKey string, token *apiv1.AccessToken) (*apiv1.AccessToken, error) {
+// SaveAccessTokenUsingAccessKey saves a new access token by validating the given access key.
+func (g *Gatekeeper) SaveAccessTokenWithAccessKey(ctx context.Context, accessKey string, token *apiv1.AccessToken) error {
 	if err := g.compareAccessKey(ctx, accessKey); err != nil {
-		return nil, err
+		return err
 	}
 
-	if err := g.tm.SaveToken(ctx, token); err != nil {
-		return nil, err
-	}
-
-	return token, nil
+	return g.tm.SaveToken(ctx, token)
 }
 
 func (g *Gatekeeper) generateAccessKey(ctx context.Context) (string, error) {

@@ -254,20 +254,19 @@ var _ = Describe("gatekeeper", func() {
 			},
 		}
 
-		token, err = gk.GenerateAccessToken(ctx, string(item.Raw), token)
+		err = gk.SaveAccessTokenWithAccessKey(ctx, string(item.Raw), token)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(token).NotTo(BeNil())
 		Expect(gk.tm.IsTokenValid(token)).NotTo(HaveOccurred())
 	})
 
-	It("should fail to generate an audit access token with bad access key", func() {
+	It("should fail to save an access token with bad access key", func() {
 		token, err := gk.tm.NewToken()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(token).NotTo(BeNil())
 
-		token, err = gk.GenerateAccessToken(ctx, string("not-gonna-happen"), token)
+		err = gk.SaveAccessTokenWithAccessKey(ctx, string("not-gonna-happen"), token)
 		Expect(err).To(MatchError(ErrInvalidAccessKey))
-		Expect(token).To(BeNil())
 	})
 
 	It("should rotate the access key", func() {
