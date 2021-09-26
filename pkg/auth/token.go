@@ -92,7 +92,7 @@ func (t *TokenManager) GetToken(ctx context.Context, id string) (*apiv1.AccessTo
 	return t.GetTokenByReferenceID(ctx, getTokenReferenceIDFromID(id))
 }
 
-// GetTokenByReferenceID gets a token by its reference ID.
+// GetTokenByReferenceID gets a token by its reference ID. Returns an error if token is invalid.
 func (t *TokenManager) GetTokenByReferenceID(ctx context.Context, referenceID string) (*apiv1.AccessToken, error) {
 	if len(referenceID) != TokenLength {
 		return nil, ErrTokenInvalid

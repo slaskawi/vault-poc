@@ -6,6 +6,7 @@ import (
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
 )
 
+// SystemGenerateAccessToken generates a new AccessToken from the given access key.
 func (s *KStash) SystemGenerateAccessToken(ctx context.Context, req *apiv1.SystemGenerateAccessTokenRequest) (*apiv1.SystemGenerateAccessTokenResponse, error) {
 	resp := &apiv1.SystemGenerateAccessTokenResponse{}
 	token, err := s.gk.NewToken()
@@ -24,6 +25,7 @@ func (s *KStash) SystemGenerateAccessToken(ctx context.Context, req *apiv1.Syste
 	return resp, err
 }
 
+// SystemGenerateGatekeeperToken generates a new gatekeeper token from unseal keys.
 func (s *KStash) SystemGenerateGatekeeperToken(ctx context.Context, req *apiv1.SystemGenerateGatekeeperTokenRequest) (*apiv1.SystemGenerateGatekeeperTokenResponse, error) {
 	var err error
 	resp := &apiv1.SystemGenerateGatekeeperTokenResponse{}

@@ -68,6 +68,32 @@ message AccessToken {
     repeated ACL acls = 8;
 }
 
+message AuthTokenLookupRequest {
+    string tokenID = 1;
+    string tokenReferenceID = 2;
+}
+
+message AuthTokenLookupResponse {
+    AccessToken token = 1;
+}
+
+message AuthTokenRenewRequest {
+    string tokenID = 1;
+    string tokenReferenceID = 2;
+    string ttl = 3;
+}
+
+message AuthTokenRenewResponse {
+    AccessToken token = 1;
+}
+
+message AuthTokenRevokeRequest {
+    string tokenID = 1;
+    string tokenReferenceID = 2;
+}
+
+message AuthTokenRevokeResponse {}
+
 message SystemGenerateAccessTokenRequest {
     string accessKey = 1;
     string namespace = 2;
@@ -97,7 +123,8 @@ message SystemInitializeRequest {
 
 message SystemInitializeResponse {
     repeated string unsealKeys = 1;
-    string gatekeeperToken = 2;
+    string accessKey = 2;
+    string gatekeeperToken = 3;
 }
 
 message SystemRotateAccessKeyRequest {
@@ -162,6 +189,27 @@ message SystemUnsealResponse {
 }
 
 service KStash {
+    rpc AuthTokenLookup(AuthTokenLookupRequest) returns (AuthTokenLookupResponse) {
+        option (google.api.http) = {
+            post: "/v1/auth/token/lookup"
+            body: "*"
+        };
+    }
+
+    rpc AuthTokenRenew(AuthTokenRenewRequest) returns (AuthTokenRenewResponse) {
+        option (google.api.http) = {
+            post: "/v1/auth/token/renew"
+            body: "*"
+        };
+    }
+
+    rpc AuthTokenRevoke(AuthTokenRevokeRequest) returns (AuthTokenRevokeResponse) {
+        option (google.api.http) = {
+            post: "/v1/auth/token/revoke"
+            body: "*"
+        };
+    }
+
     rpc SystemGenerateAccessToken(SystemGenerateAccessTokenRequest) returns (SystemGenerateAccessTokenResponse) {
         option (google.api.http) = {
             post: "/v1/system/generate/token"

@@ -12,34 +12,35 @@ import (
 // Parts is the number of sharded unseal keys to generate.
 // Threshold is the number of sharded keys required to reconstruct the gatekeeper key.
 // Parts and threshold must be between 2 and 256.
-// If gatekeeperToken is true, a new gatekeeper token will also be returned alongside the unseal keys.
-func (g *Gatekeeper) InitializeBarrier(ctx context.Context, parts int, threshold int) ([]string, error) {
+// Returns uneal keys and the access key.
+func (g *Gatekeeper) InitializeBarrier(ctx context.Context, parts int, threshold int) ([]string, string, error) {
 	initialized, err := g.b.IsInitialized(ctx)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if initialized {
-		return nil, barrier.ErrBarrierAlreadyInitialized
+		return nil, "", barrier.ErrBarrierAlreadyInitialized
 	}
 
 	gatekeeperKey, err := encryption.GenerateKey(apiv1.CipherType_AES256_GCM)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	unsealKeys, err := g.GenerateUnsealKeys(gatekeeperKey, parts, threshold)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
+	var accessKey string
 	err = g.b.Initialize(ctx, gatekeeperKey, func() error {
-		_, err := g.generateAccessKey(ctx)
+		accessKey, err = g.generateAccessKey(ctx)
 		return err
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return unsealKeys, err
+	return unsealKeys, accessKey, nil
 }

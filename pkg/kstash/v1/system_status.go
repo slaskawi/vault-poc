@@ -7,6 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// SystemStatus provides system status information and is an unauthenticated endpoint.
 func (s *KStash) SystemStatus(ctx context.Context, req *apiv1.SystemStatusRequest) (*apiv1.SystemStatusResponse, error) {
 	var err error
 	resp := &apiv1.SystemStatusResponse{

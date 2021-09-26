@@ -18,6 +18,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type KStashClient interface {
+	AuthTokenLookup(ctx context.Context, in *AuthTokenLookupRequest, opts ...grpc.CallOption) (*AuthTokenLookupResponse, error)
+	AuthTokenRenew(ctx context.Context, in *AuthTokenRenewRequest, opts ...grpc.CallOption) (*AuthTokenRenewResponse, error)
+	AuthTokenRevoke(ctx context.Context, in *AuthTokenRevokeRequest, opts ...grpc.CallOption) (*AuthTokenRevokeResponse, error)
 	SystemGenerateAccessToken(ctx context.Context, in *SystemGenerateAccessTokenRequest, opts ...grpc.CallOption) (*SystemGenerateAccessTokenResponse, error)
 	SystemGenerateGatekeeperToken(ctx context.Context, in *SystemGenerateGatekeeperTokenRequest, opts ...grpc.CallOption) (*SystemGenerateGatekeeperTokenResponse, error)
 	SystemInitialize(ctx context.Context, in *SystemInitializeRequest, opts ...grpc.CallOption) (*SystemInitializeResponse, error)
@@ -35,6 +38,33 @@ type kStashClient struct {
 
 func NewKStashClient(cc grpc.ClientConnInterface) KStashClient {
 	return &kStashClient{cc}
+}
+
+func (c *kStashClient) AuthTokenLookup(ctx context.Context, in *AuthTokenLookupRequest, opts ...grpc.CallOption) (*AuthTokenLookupResponse, error) {
+	out := new(AuthTokenLookupResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/AuthTokenLookup", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kStashClient) AuthTokenRenew(ctx context.Context, in *AuthTokenRenewRequest, opts ...grpc.CallOption) (*AuthTokenRenewResponse, error) {
+	out := new(AuthTokenRenewResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/AuthTokenRenew", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kStashClient) AuthTokenRevoke(ctx context.Context, in *AuthTokenRevokeRequest, opts ...grpc.CallOption) (*AuthTokenRevokeResponse, error) {
+	out := new(AuthTokenRevokeResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/AuthTokenRevoke", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *kStashClient) SystemGenerateAccessToken(ctx context.Context, in *SystemGenerateAccessTokenRequest, opts ...grpc.CallOption) (*SystemGenerateAccessTokenResponse, error) {
@@ -122,6 +152,9 @@ func (c *kStashClient) SystemUnseal(ctx context.Context, in *SystemUnsealRequest
 // All implementations must embed UnimplementedKStashServer
 // for forward compatibility
 type KStashServer interface {
+	AuthTokenLookup(context.Context, *AuthTokenLookupRequest) (*AuthTokenLookupResponse, error)
+	AuthTokenRenew(context.Context, *AuthTokenRenewRequest) (*AuthTokenRenewResponse, error)
+	AuthTokenRevoke(context.Context, *AuthTokenRevokeRequest) (*AuthTokenRevokeResponse, error)
 	SystemGenerateAccessToken(context.Context, *SystemGenerateAccessTokenRequest) (*SystemGenerateAccessTokenResponse, error)
 	SystemGenerateGatekeeperToken(context.Context, *SystemGenerateGatekeeperTokenRequest) (*SystemGenerateGatekeeperTokenResponse, error)
 	SystemInitialize(context.Context, *SystemInitializeRequest) (*SystemInitializeResponse, error)
@@ -138,6 +171,15 @@ type KStashServer interface {
 type UnimplementedKStashServer struct {
 }
 
+func (UnimplementedKStashServer) AuthTokenLookup(context.Context, *AuthTokenLookupRequest) (*AuthTokenLookupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AuthTokenLookup not implemented")
+}
+func (UnimplementedKStashServer) AuthTokenRenew(context.Context, *AuthTokenRenewRequest) (*AuthTokenRenewResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AuthTokenRenew not implemented")
+}
+func (UnimplementedKStashServer) AuthTokenRevoke(context.Context, *AuthTokenRevokeRequest) (*AuthTokenRevokeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AuthTokenRevoke not implemented")
+}
 func (UnimplementedKStashServer) SystemGenerateAccessToken(context.Context, *SystemGenerateAccessTokenRequest) (*SystemGenerateAccessTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SystemGenerateAccessToken not implemented")
 }
@@ -176,6 +218,60 @@ type UnsafeKStashServer interface {
 
 func RegisterKStashServer(s grpc.ServiceRegistrar, srv KStashServer) {
 	s.RegisterService(&KStash_ServiceDesc, srv)
+}
+
+func _KStash_AuthTokenLookup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthTokenLookupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).AuthTokenLookup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/AuthTokenLookup",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).AuthTokenLookup(ctx, req.(*AuthTokenLookupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KStash_AuthTokenRenew_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthTokenRenewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).AuthTokenRenew(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/AuthTokenRenew",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).AuthTokenRenew(ctx, req.(*AuthTokenRenewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KStash_AuthTokenRevoke_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthTokenRevokeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).AuthTokenRevoke(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/AuthTokenRevoke",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).AuthTokenRevoke(ctx, req.(*AuthTokenRevokeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _KStash_SystemGenerateAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -347,6 +443,18 @@ var KStash_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "kstash.v1.KStash",
 	HandlerType: (*KStashServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AuthTokenLookup",
+			Handler:    _KStash_AuthTokenLookup_Handler,
+		},
+		{
+			MethodName: "AuthTokenRenew",
+			Handler:    _KStash_AuthTokenRenew_Handler,
+		},
+		{
+			MethodName: "AuthTokenRevoke",
+			Handler:    _KStash_AuthTokenRevoke_Handler,
+		},
 		{
 			MethodName: "SystemGenerateAccessToken",
 			Handler:    _KStash_SystemGenerateAccessToken_Handler,

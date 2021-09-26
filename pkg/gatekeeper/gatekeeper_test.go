@@ -160,7 +160,7 @@ var _ = Describe("gatekeeper", func() {
 	})
 
 	It("should initialize from the gatekeeper and unseal", func() {
-		keys, err = gk.InitializeBarrier(ctx, 5, 3)
+		keys, _, err = gk.InitializeBarrier(ctx, 5, 3)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(keys).To(HaveLen(5))
 
@@ -223,7 +223,7 @@ var _ = Describe("gatekeeper", func() {
 	})
 
 	It("should fail to initialize an already initialized barrier", func() {
-		_, err = gk.InitializeBarrier(ctx, 5, 3)
+		_, _, err = gk.InitializeBarrier(ctx, 5, 3)
 		Expect(err).NotTo(BeNil())
 		Expect(err).To(MatchError(barrier.ErrBarrierAlreadyInitialized))
 	})
