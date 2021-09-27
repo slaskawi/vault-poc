@@ -21,6 +21,10 @@ type KStashClient interface {
 	AuthTokenLookup(ctx context.Context, in *AuthTokenLookupRequest, opts ...grpc.CallOption) (*AuthTokenLookupResponse, error)
 	AuthTokenRenew(ctx context.Context, in *AuthTokenRenewRequest, opts ...grpc.CallOption) (*AuthTokenRenewResponse, error)
 	AuthTokenRevoke(ctx context.Context, in *AuthTokenRevokeRequest, opts ...grpc.CallOption) (*AuthTokenRevokeResponse, error)
+	KVList(ctx context.Context, in *KVListRequest, opts ...grpc.CallOption) (*KVListResponse, error)
+	KVGet(ctx context.Context, in *KVGetRequest, opts ...grpc.CallOption) (*KVGetResponse, error)
+	KVPut(ctx context.Context, in *KVPutRequest, opts ...grpc.CallOption) (*KVPutResponse, error)
+	KVDelete(ctx context.Context, in *KVDeleteRequest, opts ...grpc.CallOption) (*KVDeleteResponse, error)
 	SystemGenerateAccessToken(ctx context.Context, in *SystemGenerateAccessTokenRequest, opts ...grpc.CallOption) (*SystemGenerateAccessTokenResponse, error)
 	SystemGenerateGatekeeperToken(ctx context.Context, in *SystemGenerateGatekeeperTokenRequest, opts ...grpc.CallOption) (*SystemGenerateGatekeeperTokenResponse, error)
 	SystemInitialize(ctx context.Context, in *SystemInitializeRequest, opts ...grpc.CallOption) (*SystemInitializeResponse, error)
@@ -61,6 +65,42 @@ func (c *kStashClient) AuthTokenRenew(ctx context.Context, in *AuthTokenRenewReq
 func (c *kStashClient) AuthTokenRevoke(ctx context.Context, in *AuthTokenRevokeRequest, opts ...grpc.CallOption) (*AuthTokenRevokeResponse, error) {
 	out := new(AuthTokenRevokeResponse)
 	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/AuthTokenRevoke", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kStashClient) KVList(ctx context.Context, in *KVListRequest, opts ...grpc.CallOption) (*KVListResponse, error) {
+	out := new(KVListResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/KVList", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kStashClient) KVGet(ctx context.Context, in *KVGetRequest, opts ...grpc.CallOption) (*KVGetResponse, error) {
+	out := new(KVGetResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/KVGet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kStashClient) KVPut(ctx context.Context, in *KVPutRequest, opts ...grpc.CallOption) (*KVPutResponse, error) {
+	out := new(KVPutResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/KVPut", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kStashClient) KVDelete(ctx context.Context, in *KVDeleteRequest, opts ...grpc.CallOption) (*KVDeleteResponse, error) {
+	out := new(KVDeleteResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/KVDelete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -155,6 +195,10 @@ type KStashServer interface {
 	AuthTokenLookup(context.Context, *AuthTokenLookupRequest) (*AuthTokenLookupResponse, error)
 	AuthTokenRenew(context.Context, *AuthTokenRenewRequest) (*AuthTokenRenewResponse, error)
 	AuthTokenRevoke(context.Context, *AuthTokenRevokeRequest) (*AuthTokenRevokeResponse, error)
+	KVList(context.Context, *KVListRequest) (*KVListResponse, error)
+	KVGet(context.Context, *KVGetRequest) (*KVGetResponse, error)
+	KVPut(context.Context, *KVPutRequest) (*KVPutResponse, error)
+	KVDelete(context.Context, *KVDeleteRequest) (*KVDeleteResponse, error)
 	SystemGenerateAccessToken(context.Context, *SystemGenerateAccessTokenRequest) (*SystemGenerateAccessTokenResponse, error)
 	SystemGenerateGatekeeperToken(context.Context, *SystemGenerateGatekeeperTokenRequest) (*SystemGenerateGatekeeperTokenResponse, error)
 	SystemInitialize(context.Context, *SystemInitializeRequest) (*SystemInitializeResponse, error)
@@ -179,6 +223,18 @@ func (UnimplementedKStashServer) AuthTokenRenew(context.Context, *AuthTokenRenew
 }
 func (UnimplementedKStashServer) AuthTokenRevoke(context.Context, *AuthTokenRevokeRequest) (*AuthTokenRevokeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthTokenRevoke not implemented")
+}
+func (UnimplementedKStashServer) KVList(context.Context, *KVListRequest) (*KVListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KVList not implemented")
+}
+func (UnimplementedKStashServer) KVGet(context.Context, *KVGetRequest) (*KVGetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KVGet not implemented")
+}
+func (UnimplementedKStashServer) KVPut(context.Context, *KVPutRequest) (*KVPutResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KVPut not implemented")
+}
+func (UnimplementedKStashServer) KVDelete(context.Context, *KVDeleteRequest) (*KVDeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KVDelete not implemented")
 }
 func (UnimplementedKStashServer) SystemGenerateAccessToken(context.Context, *SystemGenerateAccessTokenRequest) (*SystemGenerateAccessTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SystemGenerateAccessToken not implemented")
@@ -270,6 +326,78 @@ func _KStash_AuthTokenRevoke_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(KStashServer).AuthTokenRevoke(ctx, req.(*AuthTokenRevokeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KStash_KVList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KVListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).KVList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/KVList",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).KVList(ctx, req.(*KVListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KStash_KVGet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KVGetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).KVGet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/KVGet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).KVGet(ctx, req.(*KVGetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KStash_KVPut_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KVPutRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).KVPut(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/KVPut",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).KVPut(ctx, req.(*KVPutRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KStash_KVDelete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KVDeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).KVDelete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/KVDelete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).KVDelete(ctx, req.(*KVDeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -454,6 +582,22 @@ var KStash_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AuthTokenRevoke",
 			Handler:    _KStash_AuthTokenRevoke_Handler,
+		},
+		{
+			MethodName: "KVList",
+			Handler:    _KStash_KVList_Handler,
+		},
+		{
+			MethodName: "KVGet",
+			Handler:    _KStash_KVGet_Handler,
+		},
+		{
+			MethodName: "KVPut",
+			Handler:    _KStash_KVPut_Handler,
+		},
+		{
+			MethodName: "KVDelete",
+			Handler:    _KStash_KVDelete_Handler,
 		},
 		{
 			MethodName: "SystemGenerateAccessToken",

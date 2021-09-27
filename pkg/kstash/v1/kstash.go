@@ -15,6 +15,7 @@ import (
 	"github.com/slaskawi/vault-poc/pkg/auth"
 	"github.com/slaskawi/vault-poc/pkg/config"
 	"github.com/slaskawi/vault-poc/pkg/gatekeeper"
+	"github.com/slaskawi/vault-poc/pkg/secret/kv"
 )
 
 var (
@@ -67,13 +68,17 @@ func (s *KStash) GetToken(ctx context.Context) (*apiv1.AccessToken, error) {
 
 // CanToken determines if a token stored in the given context has the ACLs required to perform the desired operation.
 // Returns the token, if found and an error if the token is not allowed to perform the requested operation.
-func (s *KStash) CanToken(ctx context.Context, perm apiv1.Permission, namespace, path string) (*apiv1.AccessToken, error) {
+func (s *KStash) CanToken(ctx context.Context, perm apiv1.Permission, path string) (*apiv1.AccessToken, error) {
 	token, err := s.GetToken(ctx)
 	if err != nil {
 		return token, err
 	}
 
-	return token, s.gk.ACLManager().CanPerform(token.Acls, perm, namespace, path)
+	if len(token.Namespace) == 0 {
+		return token, kv.ErrNoNamespace
+	}
+
+	return token, s.gk.ACLManager().CanPerform(token.Acls, perm, token.Namespace, path)
 }
 
 // ParseTTL attempts to parse the given TTL string. An example string to represent one hour would be `1h`.

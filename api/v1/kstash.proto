@@ -94,6 +94,34 @@ message AuthTokenRevokeRequest {
 
 message AuthTokenRevokeResponse {}
 
+message KVListRequest {
+    string path = 1;
+}
+
+message KVListResponse {
+    repeated string paths = 1;
+}
+
+message KVGetRequest {
+    string path = 1;
+}
+
+message KVGetResponse {
+    Item item = 1;
+}
+
+message KVPutRequest {
+    Item item = 1;
+}
+
+message KVPutResponse {}
+
+message KVDeleteRequest {
+    string path = 1;
+}
+
+message KVDeleteResponse {}
+
 message SystemGenerateAccessTokenRequest {
     string accessKey = 1;
     string namespace = 2;
@@ -206,6 +234,34 @@ service KStash {
     rpc AuthTokenRevoke(AuthTokenRevokeRequest) returns (AuthTokenRevokeResponse) {
         option (google.api.http) = {
             post: "/v1/auth/token/revoke"
+            body: "*"
+        };
+    }
+
+    rpc KVList(KVListRequest) returns (KVListResponse) {
+        option (google.api.http) = {
+            post: "/v1/secret/kv/list"
+            body: "*"
+        };
+    }
+
+    rpc KVGet(KVGetRequest) returns (KVGetResponse) {
+        option (google.api.http) = {
+            post: "/v1/secret/kv/get"
+            body: "*"
+        };
+    }
+
+    rpc KVPut(KVPutRequest) returns (KVPutResponse) {
+        option (google.api.http) = {
+            post: "/v1/secret/kv/put"
+            body: "*"
+        };
+    }
+
+    rpc KVDelete(KVDeleteRequest) returns (KVDeleteResponse) {
+        option (google.api.http) = {
+            post: "/v1/secret/kv/delete"
             body: "*"
         };
     }
