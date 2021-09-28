@@ -9,7 +9,7 @@ import (
 
 // RotateAccessKey rotates the access key using the existing access key.
 func (g *Gatekeeper) RotateAccessKey(ctx context.Context, accessKey string) (string, error) {
-	if err := g.compareAccessKey(ctx, accessKey); err != nil {
+	if err := g.CompareAccessKey(ctx, accessKey); err != nil {
 		return "", err
 	}
 
@@ -17,6 +17,8 @@ func (g *Gatekeeper) RotateAccessKey(ctx context.Context, accessKey string) (str
 }
 
 // RotateAccessKeyWithUnsealKeys rotates the access key using the given unseal keys.
+// NOTE: this functionality was removed from the API to maintain separation of concerns and prevent unseal key holders from granting themselves access tokens.
+// Discussion on this is pending, but this could be removed entirely in the future.
 func (g *Gatekeeper) RotateAccessKeyWithUnsealKeys(ctx context.Context, unsealKeys []string) (string, error) {
 	gatekeeperKey, err := g.gatekeeperKeyFromUnsealKeys(unsealKeys)
 	if err != nil {
@@ -37,7 +39,7 @@ func (g *Gatekeeper) NewToken() (*apiv1.AccessToken, error) {
 
 // SaveAccessTokenUsingAccessKey saves a new access token by validating the given access key.
 func (g *Gatekeeper) SaveAccessTokenWithAccessKey(ctx context.Context, accessKey string, token *apiv1.AccessToken) error {
-	if err := g.compareAccessKey(ctx, accessKey); err != nil {
+	if err := g.CompareAccessKey(ctx, accessKey); err != nil {
 		return err
 	}
 
@@ -46,6 +48,24 @@ func (g *Gatekeeper) SaveAccessTokenWithAccessKey(ctx context.Context, accessKey
 	}
 
 	return g.tm.SaveToken(ctx, token)
+}
+
+// CompareAccessKey compares the given access key against the known access key
+func (g *Gatekeeper) CompareAccessKey(ctx context.Context, accessKey string) error {
+	item, err := g.b.Get(ctx, accessKeyHashKey)
+	if err != nil {
+		return err
+	}
+
+	if item.Raw == nil {
+		return ErrInvalidAccessKey
+	}
+
+	if string(item.Raw) != accessKey {
+		return ErrInvalidAccessKey
+	}
+
+	return nil
 }
 
 func (g *Gatekeeper) generateAccessKey(ctx context.Context) (string, error) {
@@ -66,21 +86,4 @@ func (g *Gatekeeper) generateAccessKey(ctx context.Context) (string, error) {
 	}
 
 	return accessKeyStr, nil
-}
-
-func (g *Gatekeeper) compareAccessKey(ctx context.Context, accessKey string) error {
-	item, err := g.b.Get(ctx, accessKeyHashKey)
-	if err != nil {
-		return err
-	}
-
-	if item.Raw == nil {
-		return ErrInvalidAccessKey
-	}
-
-	if string(item.Raw) != accessKey {
-		return ErrInvalidAccessKey
-	}
-
-	return nil
 }

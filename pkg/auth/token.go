@@ -176,6 +176,23 @@ func (t *TokenManager) RenewTokenByReferenceID(ctx context.Context, referenceID 
 	return token, nil
 }
 
+// PruneExpiredTokens removes all expired tokens from storage.
+func (t *TokenManager) PruneExpiredTokens(ctx context.Context) error {
+	tokens, err := t.b.List(ctx, authTokensPrefix)
+	if err != nil {
+		return err
+	}
+
+	for _, ref := range tokens {
+		_, err := t.GetTokenByReferenceID(ctx, ref)
+		if err == ErrTokenNotFound {
+			t.RevokeTokenByReferenceID(ctx, ref)
+		}
+	}
+
+	return nil
+}
+
 func getTokenReferenceIDFromID(id string) string {
 	hash := encryption.FromBase64(id[len(tokenIDPrefix):])
 	return tokenReferenceIDPrefix + hash.Uint64String()[:TokenLength-len(tokenReferenceIDPrefix)]

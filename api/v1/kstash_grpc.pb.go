@@ -28,6 +28,7 @@ type KStashClient interface {
 	SystemGenerateAccessToken(ctx context.Context, in *SystemGenerateAccessTokenRequest, opts ...grpc.CallOption) (*SystemGenerateAccessTokenResponse, error)
 	SystemGenerateGatekeeperToken(ctx context.Context, in *SystemGenerateGatekeeperTokenRequest, opts ...grpc.CallOption) (*SystemGenerateGatekeeperTokenResponse, error)
 	SystemInitialize(ctx context.Context, in *SystemInitializeRequest, opts ...grpc.CallOption) (*SystemInitializeResponse, error)
+	SystemPruneTokens(ctx context.Context, in *SystemPruneTokensRequest, opts ...grpc.CallOption) (*SystemPruneTokensResponse, error)
 	SystemRotateAccessKey(ctx context.Context, in *SystemRotateAccessKeyRequest, opts ...grpc.CallOption) (*SystemRotateAccessKeyResponse, error)
 	SystemRotateEncryptionKey(ctx context.Context, in *SystemRotateEncryptionKeyRequest, opts ...grpc.CallOption) (*SystemRotateEncryptionKeyResponse, error)
 	SystemRotateGatekeeperToken(ctx context.Context, in *SystemRotateGatekeeperTokenRequest, opts ...grpc.CallOption) (*SystemRotateGatekeeperTokenResponse, error)
@@ -136,6 +137,15 @@ func (c *kStashClient) SystemInitialize(ctx context.Context, in *SystemInitializ
 	return out, nil
 }
 
+func (c *kStashClient) SystemPruneTokens(ctx context.Context, in *SystemPruneTokensRequest, opts ...grpc.CallOption) (*SystemPruneTokensResponse, error) {
+	out := new(SystemPruneTokensResponse)
+	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/SystemPruneTokens", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *kStashClient) SystemRotateAccessKey(ctx context.Context, in *SystemRotateAccessKeyRequest, opts ...grpc.CallOption) (*SystemRotateAccessKeyResponse, error) {
 	out := new(SystemRotateAccessKeyResponse)
 	err := c.cc.Invoke(ctx, "/kstash.v1.KStash/SystemRotateAccessKey", in, out, opts...)
@@ -222,6 +232,7 @@ type KStashServer interface {
 	SystemGenerateAccessToken(context.Context, *SystemGenerateAccessTokenRequest) (*SystemGenerateAccessTokenResponse, error)
 	SystemGenerateGatekeeperToken(context.Context, *SystemGenerateGatekeeperTokenRequest) (*SystemGenerateGatekeeperTokenResponse, error)
 	SystemInitialize(context.Context, *SystemInitializeRequest) (*SystemInitializeResponse, error)
+	SystemPruneTokens(context.Context, *SystemPruneTokensRequest) (*SystemPruneTokensResponse, error)
 	SystemRotateAccessKey(context.Context, *SystemRotateAccessKeyRequest) (*SystemRotateAccessKeyResponse, error)
 	SystemRotateEncryptionKey(context.Context, *SystemRotateEncryptionKeyRequest) (*SystemRotateEncryptionKeyResponse, error)
 	SystemRotateGatekeeperToken(context.Context, *SystemRotateGatekeeperTokenRequest) (*SystemRotateGatekeeperTokenResponse, error)
@@ -266,6 +277,9 @@ func (UnimplementedKStashServer) SystemGenerateGatekeeperToken(context.Context, 
 }
 func (UnimplementedKStashServer) SystemInitialize(context.Context, *SystemInitializeRequest) (*SystemInitializeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SystemInitialize not implemented")
+}
+func (UnimplementedKStashServer) SystemPruneTokens(context.Context, *SystemPruneTokensRequest) (*SystemPruneTokensResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SystemPruneTokens not implemented")
 }
 func (UnimplementedKStashServer) SystemRotateAccessKey(context.Context, *SystemRotateAccessKeyRequest) (*SystemRotateAccessKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SystemRotateAccessKey not implemented")
@@ -484,6 +498,24 @@ func _KStash_SystemInitialize_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KStash_SystemPruneTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SystemPruneTokensRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KStashServer).SystemPruneTokens(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kstash.v1.KStash/SystemPruneTokens",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KStashServer).SystemPruneTokens(ctx, req.(*SystemPruneTokensRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _KStash_SystemRotateAccessKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SystemRotateAccessKeyRequest)
 	if err := dec(in); err != nil {
@@ -674,6 +706,10 @@ var KStash_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SystemInitialize",
 			Handler:    _KStash_SystemInitialize_Handler,
+		},
+		{
+			MethodName: "SystemPruneTokens",
+			Handler:    _KStash_SystemPruneTokens_Handler,
 		},
 		{
 			MethodName: "SystemRotateAccessKey",

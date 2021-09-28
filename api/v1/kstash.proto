@@ -155,9 +155,14 @@ message SystemInitializeResponse {
     string gatekeeperToken = 3;
 }
 
+message SystemPruneTokensRequest {
+    string accessKey = 1;
+}
+
+message SystemPruneTokensResponse {}
+
 message SystemRotateAccessKeyRequest {
     string accessKey = 1;
-    repeated string unsealKeys = 2;
 }
 
 message SystemRotateAccessKeyResponse {
@@ -289,6 +294,13 @@ service KStash {
     rpc SystemInitialize(SystemInitializeRequest) returns (SystemInitializeResponse) {
         option (google.api.http) = {
             post: "/v1/system/initialize"
+            body: "*"
+        };
+    }
+
+    rpc SystemPruneTokens(SystemPruneTokensRequest) returns (SystemPruneTokensResponse) {
+        option (google.api.http) = {
+            post: "/v1/system/prune/token"
             body: "*"
         };
     }

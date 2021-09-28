@@ -450,6 +450,40 @@ var _ = Describe("kstash", func() {
 		Expect(resp).NotTo(BeNil())
 	})
 
+	It("prunes expired tokens", func() {
+		t, err := ks.gk.TokenManager().NewToken()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(t).NotTo(BeNil())
+		Expect(t.Id).NotTo(BeEmpty())
+		Expect(t.ReferenceID).NotTo(BeEmpty())
+
+		t.ExpiresAt = 1
+		err = ks.gk.TokenManager().SaveToken(ctx, t)
+		Expect(err).NotTo(HaveOccurred())
+
+		req := &apiv1.SystemPruneTokensRequest{
+			AccessKey: accessKey,
+		}
+
+		resp, err := server.SystemPruneTokens(ctx, req)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp).NotTo(BeNil())
+
+		t, err = ks.gk.TokenManager().GetTokenByReferenceID(ctx, t.ReferenceID)
+		Expect(err).To(MatchError(auth.ErrTokenNotFound))
+		Expect(t).To(BeNil())
+	})
+
+	It("fails to prune tokens if access key is invalid", func() {
+		req := &apiv1.SystemPruneTokensRequest{
+			AccessKey: accessKey[1:],
+		}
+
+		resp, err := server.SystemPruneTokens(ctx, req)
+		Expect(err).To(MatchError(gatekeeper.ErrInvalidAccessKey))
+		Expect(resp).NotTo(BeNil())
+	})
+
 	It("can parse the TTL", func() {
 		d, err := ks.ParseTTL("")
 		Expect(err).To(MatchError(ErrInvalidTTL))

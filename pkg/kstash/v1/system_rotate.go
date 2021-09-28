@@ -6,17 +6,12 @@ import (
 	apiv1 "github.com/slaskawi/vault-poc/api/v1"
 )
 
-// SystemRotateAccessKey rotates the access key either with the current access key or the unseal keys.
+// SystemRotateAccessKey rotates the access key with the current access key.
 func (s *KStash) SystemRotateAccessKey(ctx context.Context, req *apiv1.SystemRotateAccessKeyRequest) (*apiv1.SystemRotateAccessKeyResponse, error) {
 	var err error
 	resp := &apiv1.SystemRotateAccessKeyResponse{}
 
-	if len(req.AccessKey) > 0 {
-		resp.AccessKey, err = s.gk.RotateAccessKey(ctx, req.AccessKey)
-		return resp, err
-	}
-
-	resp.AccessKey, err = s.gk.RotateAccessKeyWithUnsealKeys(ctx, req.UnsealKeys)
+	resp.AccessKey, err = s.gk.RotateAccessKey(ctx, req.AccessKey)
 	return resp, err
 }
 

@@ -146,6 +146,7 @@ Unseal keys and/or gatekeeper tokens, along with the storage backend have been c
 * [x] Key/value store
 * [x] ACL system
 * [x] gRPC + REST API
+* [ ] Automatic cleanup of expired access tokens
 * [ ] Automatic encryption key rotation
 * [ ] Rekey operation to re-encrypt secrets and remove old encryption keys from the keychain
 
