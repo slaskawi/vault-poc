@@ -49,10 +49,6 @@ func (s *KStash) GetTokenID(ctx context.Context) (string, error) {
 	}
 
 	idS := meta.Get("authorization")
-	if len(idS) == 0 {
-		return "", auth.ErrTokenNotFound
-	}
-
 	if len(idS[0]) < 8 {
 		return "", auth.ErrTokenNotFound
 	}

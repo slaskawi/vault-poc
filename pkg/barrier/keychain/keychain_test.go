@@ -40,6 +40,9 @@ var _ = Describe("keychain", func() {
 		err = kc.Rotate()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(kc.keys)).To(Equal(2))
+		Expect(kc.ActiveKey()).NotTo(BeNil())
+		Expect(kc.ActiveKey().Id).To(Equal(uint32(2)))
+		Expect(kc.ActiveKey().Key).NotTo(BeEmpty())
 	})
 
 	It("fails to add an existing key", func() {
@@ -62,6 +65,10 @@ var _ = Describe("keychain", func() {
 		snapshot, err = kc.Snapshot(gatekeeperKey)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshot).NotTo(BeEmpty())
+	})
+
+	It("doesn't make snapshots too large", func() {
+		Expect(len(snapshot) <= 200).To(BeTrue())
 	})
 
 	It("can restore an encrypted snapshot", func() {

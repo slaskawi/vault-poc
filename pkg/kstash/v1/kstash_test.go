@@ -16,6 +16,7 @@ import (
 	"github.com/slaskawi/vault-poc/pkg/barrier"
 	"github.com/slaskawi/vault-poc/pkg/config"
 	"github.com/slaskawi/vault-poc/pkg/gatekeeper"
+	"github.com/slaskawi/vault-poc/pkg/secret/kv"
 	"github.com/slaskawi/vault-poc/pkg/storage"
 )
 
@@ -36,7 +37,7 @@ var _ = Describe("kstash", func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(server).NotTo(BeNil())
 
-	tm := server.(*KStash).gk.TokenManager()
+	ks := server.(*KStash)
 
 	var (
 		accessKey       string
@@ -281,7 +282,7 @@ var _ = Describe("kstash", func() {
 	})
 
 	It("can validate token", func() {
-		err := tm.IsTokenValid(token)
+		err := ks.gk.TokenManager().IsTokenValid(token)
 		Expect(err).NotTo(HaveOccurred())
 
 		am := auth.NewACLManager()
@@ -316,6 +317,58 @@ var _ = Describe("kstash", func() {
 		Expect(resp.Token.Id).To(Equal(token.Id))
 		Expect(resp.Token.ReferenceID).To(Equal(token.ReferenceID))
 		Expect(resp.Token.Namespace).To(Equal(token.Namespace))
+	})
+
+	It("fails to find a token in an empty context", func() {
+		req := &apiv1.KVListRequest{}
+		_, err := server.KVList(ctx, req)
+		Expect(err).To(MatchError(auth.ErrTokenNotFound))
+	})
+
+	It("fails to find a token in a context with empty metadata", func() {
+		ctx := metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", ""))
+		req := &apiv1.KVListRequest{}
+		_, err := server.KVList(ctx, req)
+		Expect(err).To(MatchError(auth.ErrTokenNotFound))
+	})
+
+	It("fails to validate a token that is too short in a context", func() {
+		ctx := metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "1234"))
+		req := &apiv1.KVListRequest{}
+		_, err := server.KVList(ctx, req)
+		Expect(err).To(MatchError(auth.ErrTokenNotFound))
+	})
+
+	It("fails to validate a bad token without Bearer in a context", func() {
+		ctx := metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "1234567890"))
+		req := &apiv1.KVListRequest{}
+		_, err := server.KVList(ctx, req)
+		Expect(err).To(MatchError(auth.ErrTokenInvalid))
+	})
+
+	It("fails to validate a bad token in a context", func() {
+		ctx := metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "Bearer 1234567890"))
+		req := &apiv1.KVListRequest{}
+		_, err := server.KVList(ctx, req)
+		Expect(err).To(MatchError(auth.ErrTokenInvalid))
+	})
+
+	It("fails to operate on the kv without a namespace in the token", func() {
+		req := &apiv1.SystemGenerateAccessTokenRequest{
+			AccessKey: accessKey,
+			ExpiresAt: time.Now().Add(time.Minute).Unix(),
+		}
+
+		resp, err := server.SystemGenerateAccessToken(ctx, req)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp).NotTo(BeNil())
+		Expect(resp.Token).NotTo(BeNil())
+		Expect(resp.Token.Id).NotTo(BeEmpty())
+
+		ctx := metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "Bearer "+resp.Token.Id))
+		req2 := &apiv1.KVListRequest{}
+		_, err = server.KVList(ctx, req2)
+		Expect(err).To(MatchError(kv.ErrNoNamespace))
 	})
 
 	It("can put an item in the kv", func() {
@@ -367,7 +420,7 @@ var _ = Describe("kstash", func() {
 		Expect(resp).NotTo(BeNil())
 	})
 
-	It("fails to get a, item that was deleted", func() {
+	It("fails to get an item that was deleted", func() {
 		req := &apiv1.KVGetRequest{
 			Path: "folder1/item1",
 		}
@@ -395,5 +448,35 @@ var _ = Describe("kstash", func() {
 		resp, err := server.AuthTokenLookup(ctx, req)
 		Expect(err).To(MatchError(auth.ErrTokenNotFound))
 		Expect(resp).NotTo(BeNil())
+	})
+
+	It("can parse the TTL", func() {
+		d, err := ks.ParseTTL("")
+		Expect(err).To(MatchError(ErrInvalidTTL))
+		Expect(d).To(BeZero())
+
+		d, err = ks.ParseTTL("1d")
+		Expect(err).To(MatchError(ErrInvalidTTL))
+		Expect(d).To(BeZero())
+
+		d, err = ks.ParseTTL("asdf")
+		Expect(err).To(MatchError(ErrInvalidTTL))
+		Expect(d).To(BeZero())
+
+		d, err = ks.ParseTTL("asdf50")
+		Expect(err).To(MatchError(ErrInvalidTTL))
+		Expect(d).To(BeZero())
+
+		d, err = ks.ParseTTL("1h")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(d).To(Equal(time.Hour))
+
+		d, err = ks.ParseTTL("5m")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(d).To(Equal(5 * time.Minute))
+
+		d, err = ks.ParseTTL("300")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(d).To(Equal(5 * time.Minute))
 	})
 })

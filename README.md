@@ -140,6 +140,15 @@ Unseal keys and/or gatekeeper tokens, along with the storage backend have been c
 * Result: An attacker can reconstruct the gatekeeper key and use it to decrypt the data from the compromised storage backend
 * Action: Secure the storage backend, rotate the unseal keys, rotate the encryption key, and re-encrypt existing data
 
+## Roadmap
+* [x] Memory and Etcd storage backends
+* [x] Barrier and gatekeeper
+* [x] Key/value store
+* [x] ACL system
+* [x] gRPC + REST API
+* [ ] Automatic encryption key rotation
+* [ ] Rekey operation to re-encrypt secrets and remove old encryption keys from the keychain
+
 ## Developing
 The following are required:
 * Go v1.16+

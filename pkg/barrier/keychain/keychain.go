@@ -11,7 +11,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const keychainName = "keychain"
+const (
+	keychainName = "keychain"
+	maxKeys      = 1000 // assuming each key marshaled and encrypted consumes ~70B of storage, and we want to keep the size <100KB, then 1,000 keys is about the max we'd want and a rekey would be required to clean up old keys.
+)
 
 // Keychain object.
 type Keychain struct {
@@ -97,6 +100,10 @@ func (k *Keychain) ActiveKey() *apiv1.EncryptionKey {
 func (k *Keychain) Add(key *apiv1.EncryptionKey) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
+
+	if len(k.keys) >= maxKeys {
+		return fmt.Errorf("the maximum number of keys on the keychain has been exceeded, a rekey operation is required to remove old encryption keys")
+	}
 
 	if key.Id == 0 {
 		if len(k.keys) == 0 {
