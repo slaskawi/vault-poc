@@ -41,6 +41,10 @@ func (g *Gatekeeper) SaveAccessTokenWithAccessKey(ctx context.Context, accessKey
 		return err
 	}
 
+	if err := g.am.ValidateACLs(token.Acls); err != nil {
+		return err
+	}
+
 	return g.tm.SaveToken(ctx, token)
 }
 

@@ -189,6 +189,12 @@ message SystemRotateUnsealKeysResponse {
     repeated string unsealKeys = 1;
 }
 
+message SystemRevokeGatekeeperTokenRequest {
+    string gatekeeperToken = 1;
+}
+
+message SystemRevokeGatekeeperTokenResponse {}
+
 message SystemSealRequest {
     string gatekeeperToken = 1;
     bool renew = 2;
@@ -304,6 +310,20 @@ service KStash {
     rpc SystemRotateGatekeeperToken(SystemRotateGatekeeperTokenRequest) returns (SystemRotateGatekeeperTokenResponse) {
         option (google.api.http) = {
             post: "/v1/system/rotate/gatekeeper"
+            body: "*"
+        };
+    }
+
+    rpc SystemRotateUnsealKeys(SystemRotateUnsealKeysRequest) returns (SystemRotateUnsealKeysResponse) {
+        option (google.api.http) = {
+            post: "/v1/system/rotate/unseal"
+            body: "*"
+        };
+    }
+
+    rpc SystemRevokeGatekeeperToken(SystemRevokeGatekeeperTokenRequest) returns (SystemRevokeGatekeeperTokenResponse) {
+        option (google.api.http) = {
+            post: "/v1/system/revoke/gatekeeper"
             body: "*"
         };
     }

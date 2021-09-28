@@ -53,7 +53,11 @@ func (s *KStash) GetTokenID(ctx context.Context) (string, error) {
 		return "", auth.ErrTokenNotFound
 	}
 
-	return idS[0], nil
+	if len(idS[0]) < 8 {
+		return "", auth.ErrTokenNotFound
+	}
+
+	return idS[0][7:], nil
 }
 
 // GetToken from the given context. Returns an error if the token is invalid.
